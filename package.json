@@ -1,0 +1,26 @@
+{
+  "name": "canvas",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/eslint": "1.17.0",
+    "@nuxt/fonts": "0.14.0",
+    "@nuxt/hints": "1.1.4",
+    "@nuxt/icon": "2.5.1",
+    "@nuxt/image": "2.1.0",
+    "eslint": "^10.10.0",
+    "nuxt": "^4.5.2",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.7"
+  }
+}
