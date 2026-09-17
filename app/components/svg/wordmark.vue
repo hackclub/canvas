@@ -35,8 +35,14 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  width?: number;
-  height?: number;
-}>();
+const props = defineProps({
+  width: {
+    type: Number,
+    default: undefined,
+  },
+  height: {
+    type: Number,
+    default: undefined,
+  },
+});
 </script>

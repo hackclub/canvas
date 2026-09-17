@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <svg version="1.1" width="70" height="20" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-<rect x="52" y="2" width="1" height="1" fill="#000000" />
+<rect x="52" y="2" width="1" height="1" fill="#4EEF49" />
 <rect x="56" y="2" width="1" height="2" fill="#000000" />
 <rect x="59" y="2" width="2" height="1" fill="#000000" />
 <rect x="64" y="2" width="1" height="18" fill="#000000" />
@@ -8,17 +8,17 @@
 <rect x="0" y="3" width="1" height="1" fill="#000000" />
 <rect x="3" y="3" width="2" height="1" fill="#000000" />
 <rect x="6" y="3" width="1" height="3" fill="#000000" />
-<rect x="8" y="3" width="1" height="1" fill="#000000" />
+<rect x="8" y="3" width="1" height="1" fill="#DCB4FF" />
 <rect x="12" y="3" width="1" height="2" fill="#000000" />
 <rect x="19" y="3" width="2" height="1" fill="#000000" />
-<rect x="22" y="3" width="1" height="1" fill="#000000" />
+<rect x="22" y="3" width="1" height="1" fill="#FF6464" />
 <rect x="29" y="3" width="1" height="2" fill="#000000" />
 <rect x="31" y="3" width="2" height="1" fill="#000000" />
 <rect x="41" y="3" width="1" height="1" fill="#000000" />
 <rect x="48" y="3" width="1" height="1" fill="#000000" />
 <rect x="62" y="3" width="1" height="2" fill="#000000" />
 <rect x="65" y="3" width="2" height="1" fill="#000000" />
-<rect x="68" y="3" width="1" height="1" fill="#000000" />
+<rect x="68" y="3" width="1" height="1" fill="#89BDFF" />
 <rect x="1" y="4" width="2" height="1" fill="#000000" />
 <rect x="17" y="4" width="1" height="1" fill="#000000" />
 <rect x="21" y="4" width="1" height="1" fill="#000000" />
@@ -33,7 +33,7 @@
 <rect x="57" y="4" width="4" height="1" fill="#000000" />
 <rect x="63" y="4" width="1" height="16" fill="#000000" />
 <rect x="66" y="4" width="2" height="3" fill="#000000" />
-<rect x="1" y="5" width="1" height="1" fill="#000000" />
+<rect x="1" y="5" width="1" height="1" fill="#DCB4FF" />
 <rect x="8" y="5" width="1" height="1" fill="#000000" />
 <rect x="14" y="5" width="1" height="1" fill="#000000" />
 <rect x="16" y="5" width="1" height="4" fill="#000000" />
@@ -45,19 +45,19 @@
 <rect x="45" y="5" width="3" height="1" fill="#000000" />
 <rect x="50" y="5" width="1" height="15" fill="#000000" />
 <rect x="54" y="5" width="1" height="1" fill="#000000" />
-<rect x="56" y="5" width="1" height="1" fill="#000000" />
+<rect x="56" y="5" width="1" height="1" fill="#89BDFF" />
 <rect x="59" y="5" width="1" height="3" fill="#000000" />
 <rect x="61" y="5" width="1" height="15" fill="#000000" />
 <rect x="65" y="5" width="1" height="15" fill="#000000" />
 <rect x="68" y="5" width="1" height="1" fill="#000000" />
 <rect x="3" y="6" width="3" height="1" fill="#000000" />
-<rect x="7" y="6" width="1" height="1" fill="#000000" />
+<rect x="7" y="6" width="1" height="1" fill="#4EEF49" />
 <rect x="9" y="6" width="1" height="1" fill="#000000" />
 <rect x="11" y="6" width="1" height="2" fill="#000000" />
 <rect x="13" y="6" width="1" height="1" fill="#000000" />
 <rect x="18" y="6" width="1" height="3" fill="#000000" />
 <rect x="20" y="6" width="1" height="2" fill="#000000" />
-<rect x="23" y="6" width="1" height="1" fill="#000000" />
+<rect x="23" y="6" width="1" height="1" fill="#F9ED0A" />
 <rect x="25" y="6" width="1" height="14" fill="#000000" />
 <rect x="28" y="6" width="2" height="3" fill="#000000" />
 <rect x="33" y="6" width="1" height="14" fill="#000000" />
@@ -68,7 +68,7 @@
 <rect x="47" y="6" width="3" height="3" fill="#000000" />
 <rect x="57" y="6" width="2" height="8" fill="#000000" />
 <rect x="62" y="6" width="1" height="2" fill="#000000" />
-<rect x="69" y="6" width="1" height="1" fill="#000000" />
+<rect x="69" y="6" width="1" height="1" fill="#FFC64D" />
 <rect x="0" y="7" width="4" height="3" fill="#000000" />
 <rect x="5" y="7" width="2" height="13" fill="#000000" />
 <rect x="8" y="7" width="1" height="13" fill="#000000" />
@@ -82,11 +82,11 @@
 <rect x="30" y="7" width="2" height="1" fill="#000000" />
 <rect x="34" y="7" width="1" height="2" fill="#000000" />
 <rect x="36" y="7" width="1" height="1" fill="#000000" />
-<rect x="38" y="7" width="1" height="1" fill="#000000" />
+<rect x="38" y="7" width="1" height="1" fill="#FF6464" />
 <rect x="40" y="7" width="3" height="13" fill="#000000" />
 <rect x="44" y="7" width="1" height="13" fill="#000000" />
 <rect x="46" y="7" width="1" height="13" fill="#000000" />
-<rect x="54" y="7" width="1" height="1" fill="#000000" />
+<rect x="54" y="7" width="1" height="1" fill="#F9ED0A" />
 <rect x="60" y="7" width="1" height="13" fill="#000000" />
 <rect x="66" y="7" width="1" height="13" fill="#000000" />
 <rect x="68" y="7" width="1" height="2" fill="#000000" />
