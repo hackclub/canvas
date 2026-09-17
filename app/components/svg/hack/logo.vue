@@ -1,8 +1,8 @@
 <template>
   <svg
     fill="none"
-    :width="props.width || (props.height ? undefined : 526)"
-    :height="props.height || (props.width ? undefined : 184)"
+    :width="props.width"
+    :height="props.height"
     viewBox="0 0 526 184"
     xmlns="http://www.w3.org/2000/svg"
   >

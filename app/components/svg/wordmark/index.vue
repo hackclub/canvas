@@ -1,7 +1,7 @@
 <template>
   <svg
-    :width="props.width || (props.height ? undefined : 618)"
-    :height="props.height || (props.width ? undefined : 70)"
+    :width="props.width"
+    :height="props.height"
     viewBox="0 0 618 70"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

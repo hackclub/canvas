@@ -5,10 +5,17 @@
         <SvgHackOrphtop :width="150" />
         <div class="pt-4">
           <button
-            class="flex items-center ease-in-out duration-200 gap-1 p-3 bg-black transition-colors border-black border-4 hover:bg-white hover:text-black text-white font-bold"
+            class="group relative overflow-hidden border-black border-4 bg-black px-3 py-3 font-bold text-white"
           >
-            <span>start painting</span>
-            <Icon name="lucide:arrow-right" :size="22" />
+            <span
+              class="absolute inset-0 bg-white translate-y-full transition-transform duration-200 ease-in-out group-hover:translate-y-0"
+            />
+            <span
+              class="relative z-10 flex items-center gap-1 transition-colors duration-200 ease-in-out group-hover:text-black"
+            >
+              <span>Start painting</span>
+              <Icon name="lucide:arrow-right" :size="22" />
+            </span>
           </button>
         </div>
       </div>
@@ -20,7 +27,7 @@
       <div
         class="w-full max-w-150 flex flex-col items-center gap-4 text-center -translate-y-6"
       >
-        <SvgWordmark class="w-full max-w-75" />
+        <SvgWordmark class="w-full max-w-90" />
         <p class="text-xl max-w-150">
           <b>build projects and paint pixels on a shared canvas.</b> the final
           result gets put up at hack club hq!
