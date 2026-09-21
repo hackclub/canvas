@@ -4,19 +4,7 @@
       <div class="flex justify-between items-start">
         <SvgHackOrphtop :width="150" />
         <div class="pt-4">
-          <button
-            class="group relative overflow-hidden border-black border-4 bg-black px-3 py-3 font-bold text-white"
-          >
-            <span
-              class="absolute inset-0 bg-white translate-y-full transition-transform duration-200 ease-in-out group-hover:translate-y-0"
-            />
-            <span
-              class="relative z-10 flex items-center gap-1 transition-colors duration-200 ease-in-out group-hover:text-black"
-            >
-              <span>Start painting</span>
-              <Icon name="lucide:arrow-right" :size="22" />
-            </span>
-          </button>
+          <UiButton icon="lucide:arrow-right">Start painting</UiButton>
         </div>
       </div>
     </nav>
@@ -32,10 +20,18 @@
           <b>build projects and paint pixels on a shared canvas.</b> the final
           result gets put up at hack club hq!
         </p>
+
+        <div
+          class="mt-6 flex items-center border-black border-4 bg-black gap-1"
+        >
+          <input placeholder="john@example.com" class="p-3 bg-white" />
+          <UiButton icon="lucide:arrow-right" inline>let's paint!</UiButton>
+        </div>
+        <p class="opacity-50">September 28th - October 12th</p>
       </div>
     </section>
 
-    <section class="relative -mt-50 z-10">
+    <section class="relative -mt-60 z-10">
       <NuxtImg src="/img/pixelbg.svg" class="w-full" />
       <div class="bg-black h-200 w-full" />
     </section>
