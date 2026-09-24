@@ -2,7 +2,7 @@
   <component
     :is="tag"
     v-bind="componentAttrs"
-    class="group relative inline-flex overflow-hidden border-black bg-black px-3 py-3 font-bold text-white"
+    class="cursor-pointer group relative inline-flex overflow-hidden border-black bg-black px-3 py-3 font-bold text-white"
     :class="props.inline ? '' : 'border-4'"
   >
     <span
@@ -30,6 +30,8 @@
 </template>
 
 <script setup>
+import { NuxtLink } from "#components";
+
 defineOptions({
   inheritAttrs: false,
 });
@@ -55,10 +57,6 @@ const props = defineProps({
     type: [String, Object],
     default: null,
   },
-  href: {
-    type: String,
-    default: "",
-  },
   type: {
     type: String,
     default: "button",
@@ -76,8 +74,7 @@ const props = defineProps({
 const attrs = useAttrs();
 
 const tag = computed(() => {
-  if (props.to) return "NuxtLink";
-  if (props.href) return "a";
+  if (props.to) return NuxtLink;
   return "button";
 });
 
@@ -86,13 +83,6 @@ const componentAttrs = computed(() => {
     return {
       ...attrs,
       to: props.to,
-    };
-  }
-
-  if (props.href) {
-    return {
-      ...attrs,
-      href: props.href,
     };
   }
 

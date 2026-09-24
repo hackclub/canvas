@@ -27,7 +27,7 @@
           <input placeholder="john@example.com" class="p-3 bg-white" />
           <UiButton icon="lucide:arrow-right" inline>let's paint!</UiButton>
         </div>
-        <p class="opacity-50">September 28th - October 12th</p>
+        <p class="opacity-50">October 1st - October 14th</p>
       </div>
     </section>
 

@@ -1,12 +1,15 @@
 <template>
   <div class="space-y-2 p-6">
     <h1 class="text-2xl font-bold">
-      Hi {{ user?.first_name }}, welcome to Canvas!
+      hi {{ user?.first_name?.toLowerCase() || "" }}, welcome to canvas!
     </h1>
-    <p>
+    <p class="mb-3">
       One large canvas. Build projects to place pixels. Work together to make
       something awesome. <b>The final result gets put up at Hack Club HQ!</b>
     </p>
+    <UiButtonSmall to="/app/setup/earning-pixels" icon="lucide:arrow-right"
+      >let's get started!</UiButtonSmall
+    >
   </div>
 </template>
 
