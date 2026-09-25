@@ -8,6 +8,7 @@
 <script setup lang="ts">
 definePageMeta({
   middleware: "auth",
+  layout: "app",
 });
 
 const { user, clear } = useUserSession();

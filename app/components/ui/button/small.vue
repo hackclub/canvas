@@ -2,7 +2,7 @@
   <component
     :is="tag"
     v-bind="componentAttrs"
-    class="cursor-pointer group relative inline-flex overflow-hidden rounded-full border-black bg-black px-3 py-1 text-sm font-bold text-white"
+    class="no-underline! cursor-pointer group relative inline-flex overflow-hidden rounded-full border-black bg-black px-3 py-1 text-sm font-bold text-white"
     :class="props.inline ? '' : 'border-3'"
   >
     <span

@@ -1,3 +1,5 @@
+import { sql } from 'drizzle-orm'
+
 // GET /auth/hackclub — Hack Club Auth OAuth flow (https://auth.hackclub.com/docs/oauth-guide)
 // Without a `code` it redirects to Hack Club Auth; Hack Club Auth then redirects back here with one.
 const HCA_URL = 'https://auth.hackclub.com'
@@ -64,8 +66,16 @@ export default defineEventHandler(async (event) => {
     headers: { Authorization: `Bearer ${token.access_token}` },
   })
 
-  // Only the ID is stored; the rest of the profile lives in the session cookie
-  await useDB().insert(schema.users).values({ id: identity.id }).onConflictDoNothing()
+  // Keep the stored name in sync with Hack Club Auth on every sign-in
+  const userIdentity = { first_name: identity.first_name, last_name: identity.last_name }
+  await useDB()
+    .insert(schema.users)
+    .values({ id: identity.id, identity: userIdentity })
+    .onConflictDoUpdate({
+      target: schema.users.id,
+      // Merge so fields added to `identity` later aren't wiped
+      set: { identity: sql`${schema.users.identity} || ${JSON.stringify(userIdentity)}::jsonb` },
+    })
 
   await setUserSession(event, { user: identity })
   return sendRedirect(event, '/app')

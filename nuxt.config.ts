@@ -22,6 +22,11 @@ export default defineNuxtConfig({
       clientId: process.env.HCA_CLIENT_ID ?? '',
       clientSecret: process.env.HCA_CLIENT_SECRET ?? '',
     },
+    // Hackatime OAuth app; overridable with NUXT_HACKATIME_CLIENT_ID / NUXT_HACKATIME_CLIENT_SECRET
+    hackatime: {
+      clientId: process.env.HACKATIME_CLIENT_ID ?? '',
+      clientSecret: process.env.HACKATIME_CLIENT_SECRET ?? '',
+    },
   },
 
   css: ['~/assets/css/main.css'],

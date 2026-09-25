@@ -7,7 +7,7 @@
       One large canvas. Build projects to place pixels. Work together to make
       something awesome. <b>The final result gets put up at Hack Club HQ!</b>
     </p>
-    <UiButtonSmall to="/app/setup/earning-pixels" icon="lucide:arrow-right"
+    <UiButtonSmall to="/app/setup/premise" icon="lucide:arrow-right"
       >let's get started!</UiButtonSmall
     >
   </div>

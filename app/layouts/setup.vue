@@ -2,7 +2,7 @@
   <div
     class="absolute z-5 left-0 top-0 py-5 bg-white/70 backdrop-blur-2xl w-full flex justify-center"
   >
-    <SvgWordmark class="w-full max-w-90 px-4 mx-auto" />
+    <SvgLogo class="w-full max-w-90 px-4 mx-auto" />
   </div>
   <div
     class="flex z-10 items-center justify-center h-full absolute inset-0 px-2"

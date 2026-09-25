@@ -15,7 +15,7 @@
       <div
         class="w-full max-w-150 flex flex-col items-center gap-4 text-center -translate-y-6"
       >
-        <SvgWordmark class="w-full max-w-90" />
+        <SvgLogo class="w-full max-w-90" />
         <p class="text-xl max-w-150">
           <b>build projects and paint pixels on a shared canvas.</b> the final
           result gets put up at hack club hq!
