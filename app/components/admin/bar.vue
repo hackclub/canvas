@@ -26,7 +26,6 @@
             v-if="subject.slackId"
             :to="`https://telescreen.hackclub.com/subjects/${encodeURIComponent(subject.slackId)}`"
             target="_blank"
-            icon="lucide:external-link"
             class="border-white"
           >
             telescreen

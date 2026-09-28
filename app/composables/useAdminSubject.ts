@@ -16,7 +16,8 @@ export function setAdminSubject(getSubject: () => AdminSubject | null | undefine
     subject.value = mine;
   });
   onBeforeUnmount(() => {
-    // the next page may have already set its own subject, so only clear ours
-    if (subject.value === mine) subject.value = null;
+    // the next page may have already set its own subject, so only clear ours.
+    // toRaw because useState hands back a reactive proxy, which never === the object we set
+    if (toRaw(subject.value) === mine) subject.value = null;
   });
 }
