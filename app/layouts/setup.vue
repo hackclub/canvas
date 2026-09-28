@@ -46,33 +46,7 @@
 </template>
 
 <script setup>
-const SESSION_CONFIG_KEY = "session-config";
-
-const reduceMotion = ref(false);
-
-function readSessionConfig() {
-  try {
-    return JSON.parse(localStorage.getItem(SESSION_CONFIG_KEY)) ?? {};
-  } catch {
-    return {};
-  }
-}
-
-// localStorage only exists client-side, so read it after mount
-onMounted(() => {
-  reduceMotion.value = readSessionConfig()["best-effort-reducemotion"] === true;
-});
-
-function toggleReduceMotion() {
-  reduceMotion.value = !reduceMotion.value;
-  localStorage.setItem(
-    SESSION_CONFIG_KEY,
-    JSON.stringify({
-      ...readSessionConfig(),
-      "best-effort-reducemotion": reduceMotion.value,
-    }),
-  );
-}
+const { reduceMotion, toggleReduceMotion } = useReduceMotion();
 </script>
 
 <style scoped>
