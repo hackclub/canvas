@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm'
 // GET /auth/hackclub — Hack Club Auth OAuth flow (https://auth.hackclub.com/docs/oauth-guide)
 // Without a `code` it redirects to Hack Club Auth; Hack Club Auth then redirects back here with one.
 const HCA_URL = 'https://auth.hackclub.com'
-const SCOPES = 'openid email name'
+const SCOPES = 'openid email name slack_id'
 const STATE_COOKIE = 'hca_oauth_state'
 
 interface TokenResponse {
@@ -68,15 +68,20 @@ export default defineEventHandler(async (event) => {
 
   // Keep the stored name in sync with Hack Club Auth on every sign-in
   const userIdentity = { first_name: identity.first_name, last_name: identity.last_name }
-  await useDB()
+  const slackId = identity.slack_id || null
+  const [dbUser] = await useDB()
     .insert(schema.users)
-    .values({ id: identity.id, identity: userIdentity })
+    .values({ id: identity.id, identity: userIdentity, slackId })
     .onConflictDoUpdate({
       target: schema.users.id,
-      // Merge so fields added to `identity` later aren't wiped
-      set: { identity: sql`${schema.users.identity} || ${JSON.stringify(userIdentity)}::jsonb` },
+      set: {
+        // Merge so fields added to `identity` later aren't wiped
+        identity: sql`${schema.users.identity} || ${JSON.stringify(userIdentity)}::jsonb`,
+        slackId,
+      },
     })
+    .returning({ isAdmin: schema.users.isAdmin })
 
-  await setUserSession(event, { user: identity })
+  await setUserSession(event, { user: { ...identity, isAdmin: dbUser!.isAdmin } })
   return sendRedirect(event, '/app')
 })

@@ -16,12 +16,25 @@
           v-for="project in projects"
           :key="project.id"
           :to="`/app/projects/${project.id}`"
-          class="no-underline! block border-4 border-black p-5 hover:bg-black hover:text-white transition-colors"
+          class="no-underline! block border-4 border-black hover:bg-black hover:text-white transition-colors"
         >
-          <h2 class="font-bold text-xl">{{ project.name }}</h2>
-          <p class="mt-1 opacity-70 line-clamp-2">
-            {{ project.description || "No description yet" }}
-          </p>
+          <img
+            :src="
+              project.bannerKey
+                ? `/images/${project.bannerKey}`
+                : '/img/placeholder-img.svg'
+            "
+            alt=""
+            loading="lazy"
+            class="h-32 w-full object-cover"
+            :class="project.bannerKey ? 'object-center' : 'object-bottom'"
+          />
+          <div class="p-5 border-t-4 border-black">
+            <h2 class="font-bold text-xl">{{ project.name }}</h2>
+            <p class="mt-1 opacity-70 line-clamp-2">
+              {{ project.description || "No description yet" }}
+            </p>
+          </div>
         </NuxtLink>
       </div>
       <p v-else class="opacity-60 italic">
@@ -45,7 +58,11 @@
       </label>
       <p v-if="error" class="text-red-600">{{ error }}</p>
       <div class="flex gap-2">
-        <UiButtonSmall type="submit" icon="lucide:arrow-right" :disabled="saving">
+        <UiButtonSmall
+          type="submit"
+          icon="lucide:arrow-right"
+          :disabled="saving"
+        >
           create
         </UiButtonSmall>
         <UiButtonSmall @click="creating = false">cancel</UiButtonSmall>

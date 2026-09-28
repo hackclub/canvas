@@ -11,6 +11,9 @@ export interface AuthUser {
 }
 
 declare module '#auth-utils' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface User extends AuthUser {}
+  interface User extends AuthUser {
+    // From the users table, set on sign-in. Only for showing/hiding UI,
+    // server routes should check the database with requireAdmin instead.
+    isAdmin: boolean
+  }
 }

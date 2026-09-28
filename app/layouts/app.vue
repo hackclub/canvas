@@ -33,11 +33,11 @@
         </div>
       </div>
       <div class="px-8">
-        <div
-          class="text-lg font-semibold bg-black px-2 pe-3 py-1 text-white flex items-center gap-1"
-        >
-          <Icon name="lucide:paintbrush" :size="24" mode="svg" />
-          <span class="">0</span>
+        <div class="text-lg font-semibold bg-black text-white flex items-end">
+          <NuxtImg src="/img/small-pixels.svg" width="36" />
+          <div class="px-2 py-1 flex items-center">
+            <span>{{ pixels }} pixels</span>
+          </div>
         </div>
       </div>
     </nav>
@@ -45,11 +45,17 @@
   <div>
     <slot />
   </div>
+  <AdminBar />
 </template>
 
 <script setup lang="ts">
 const route = useRoute();
 const { user } = useUserSession();
+const { pixels, refreshPixels } = usePixels();
+
+// Pixels can change without this user doing anything (e.g. an admin gives them some),
+// so re-check on each page change
+watch(() => route.path, refreshPixels);
 
 const links = computed(() => [
   { to: "/app", label: "Canvas", active: route.path == "/app" },

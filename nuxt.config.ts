@@ -27,6 +27,14 @@ export default defineNuxtConfig({
       clientId: process.env.HACKATIME_CLIENT_ID ?? '',
       clientSecret: process.env.HACKATIME_CLIENT_SECRET ?? '',
     },
+    // Cloudflare R2 (S3-compatible) for uploaded images; overridable with NUXT_R2_*
+    r2: {
+      endpoint: process.env.R2_ENDPOINT ?? '',
+      region: process.env.R2_REGION ?? 'auto',
+      bucket: process.env.R2_BUCKET ?? '',
+      accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
+    },
   },
 
   css: ['~/assets/css/main.css'],

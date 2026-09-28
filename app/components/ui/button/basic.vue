@@ -1,0 +1,84 @@
+<template>
+  <component
+    :is="tag"
+    v-bind="componentAttrs"
+    class="no-underline! cursor-pointer inline-flex items-center gap-1 rounded-full border-black bg-black px-3 py-1 text-sm font-bold text-white transition-opacity duration-150 hover:opacity-80"
+    :class="[props.inline ? '' : 'border-3', contentClass]"
+  >
+    <Icon
+      v-if="icon && iconPosition === 'left'"
+      :name="icon"
+      :size="iconSize"
+    />
+    <slot>{{ label }}</slot>
+    <Icon
+      v-if="icon && iconPosition === 'right'"
+      :name="icon"
+      :size="iconSize"
+    />
+  </component>
+</template>
+
+<script setup>
+import { NuxtLink } from "#components";
+
+defineOptions({
+  inheritAttrs: false,
+});
+
+const props = defineProps({
+  label: {
+    type: String,
+    default: "",
+  },
+  icon: {
+    type: String,
+    default: "",
+  },
+  iconSize: {
+    type: Number,
+    default: 16,
+  },
+  iconPosition: {
+    type: String,
+    default: "right",
+  },
+  to: {
+    type: [String, Object],
+    default: null,
+  },
+  type: {
+    type: String,
+    default: "button",
+  },
+  contentClass: {
+    type: String,
+    default: "",
+  },
+  inline: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const attrs = useAttrs();
+
+const tag = computed(() => {
+  if (props.to) return NuxtLink;
+  return "button";
+});
+
+const componentAttrs = computed(() => {
+  if (props.to) {
+    return {
+      ...attrs,
+      to: props.to,
+    };
+  }
+
+  return {
+    ...attrs,
+    type: props.type,
+  };
+});
+</script>

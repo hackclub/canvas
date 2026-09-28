@@ -21,6 +21,13 @@ export const users = pgTable('users', {
   id: text('id').primaryKey(),
   identity: jsonb('identity').$type<UserIdentity>().notNull().default({}),
   hackatime: jsonb('hackatime').$type<UserHackatime>(),
+  // From Hack Club Auth on sign-in, null if they haven't linked Slack
+  slackId: text('slack_id'),
+  // Hackatime user ID, set by /auth/hackatime
+  hackatimeId: integer('hackatime_id'),
+  // Pixels currency balance
+  pixels: integer('pixels').notNull().default(0),
+  isAdmin: boolean('is_admin').notNull().default(false),
 })
 
 // Projects are software-only, since time is tracked through Hackatime
@@ -37,6 +44,8 @@ export const projects = pgTable('projects', {
   preexisting: boolean('preexisting').notNull().default(false),
   demoUrl: text('demo_url'),
   repoUrl: text('repo_url'),
+  // R2 object key of the banner image, served at /images/<key>
+  bannerKey: text('banner_key'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('projects_user_id_idx').on(t.userId)])

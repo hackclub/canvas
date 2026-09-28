@@ -1,6 +1,54 @@
 <template>
   <div class="flex justify-center w-full">
     <div class="max-w-full w-250 px-8 py-3">
+      <div
+        v-if="project"
+        :class="
+          bannerUrl ? 'border-4 border-b-0 border-black' : 'bg-black p-4 pb-0'
+        "
+      >
+        <div
+          class="relative overflow-hidden text-white"
+          :class="
+            bannerUrl ? 'h-51' : 'h-48 border-2 border-dashed border-white/40'
+          "
+        >
+          <img
+            v-if="bannerUrl"
+            :src="bannerUrl"
+            alt=""
+            class="size-full object-cover"
+          />
+          <button
+            v-if="!bannerUrl"
+            type="button"
+            class="size-full flex flex-col items-center justify-center gap-1 cursor-pointer opacity-70 hover:opacity-100 disabled:cursor-wait"
+            :disabled="uploadingBanner"
+            @click="bannerInput?.click()"
+          >
+            <Icon name="lucide:image-plus" :size="28" />
+            {{ uploadingBanner ? "uploading..." : "upload a banner" }}
+          </button>
+          <div v-else class="absolute bottom-3 right-3 flex gap-2">
+            <UiButtonSmall
+              :disabled="uploadingBanner"
+              @click="bannerInput?.click()"
+            >
+              {{ uploadingBanner ? "uploading..." : "change" }}
+            </UiButtonSmall>
+            <UiButtonSmall :disabled="uploadingBanner" @click="removeBanner">
+              remove
+            </UiButtonSmall>
+          </div>
+          <input
+            ref="bannerInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            class="hidden"
+            @change="uploadBanner"
+          />
+        </div>
+      </div>
       <UiCard v-if="project">
         <div class="flex items-center justify-between">
           <NuxtLink
@@ -17,6 +65,8 @@
             delete project
           </button>
         </div>
+
+        <p v-if="bannerError" class="mt-2 text-red-400">{{ bannerError }}</p>
 
         <form class="mt-4 space-y-5" @submit.prevent="save">
           <input
@@ -287,6 +337,54 @@ async function save() {
     error.value = errorMessage(e);
   } finally {
     saving.value = false;
+  }
+}
+
+// Banners upload straight away, separately from the save button
+const MAX_BANNER_BYTES = 10 * 1024 * 1024;
+const bannerInput = ref<HTMLInputElement>();
+const uploadingBanner = ref(false);
+const bannerError = ref("");
+const bannerUrl = computed(() =>
+  project.value?.bannerKey ? `/images/${project.value.bannerKey}` : null,
+);
+
+async function uploadBanner() {
+  const file = bannerInput.value?.files?.[0];
+  if (!file) return;
+  bannerInput.value!.value = "";
+  bannerError.value = "";
+  if (file.size > MAX_BANNER_BYTES) {
+    bannerError.value = "Images can be at most 10 MB";
+    return;
+  }
+
+  const body = new FormData();
+  body.append("banner", file);
+  uploadingBanner.value = true;
+  try {
+    project.value = await $fetch<ProjectData>(`/api/projects/${id}/banner`, {
+      method: "PUT",
+      body,
+    });
+  } catch (e) {
+    bannerError.value = errorMessage(e);
+  } finally {
+    uploadingBanner.value = false;
+  }
+}
+
+async function removeBanner() {
+  bannerError.value = "";
+  uploadingBanner.value = true;
+  try {
+    project.value = await $fetch<ProjectData>(`/api/projects/${id}/banner`, {
+      method: "DELETE",
+    });
+  } catch (e) {
+    bannerError.value = errorMessage(e);
+  } finally {
+    uploadingBanner.value = false;
   }
 }
 

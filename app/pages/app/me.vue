@@ -4,7 +4,7 @@
       <UiCard>
         <h1 class="font-bold text-3xl">account</h1>
         <p class="mt-3">
-          hii! this is where you can change your account settings.
+          this is where you can change your account settings :o
         </p>
         <div class="absolute top-8 right-8">
           <UiButtonSmall class="border-3 border-white" @click="logout">
@@ -12,6 +12,20 @@
           </UiButtonSmall>
         </div>
       </UiCard>
+
+      <div class="space-y-2">
+        <h2 class="font-bold text-xl">hackatime</h2>
+        <UiButtonSmall to="/auth/hackatime?return_to=/app/me" external>
+          {{ hackatime?.linked ? "reauthenticate" : "link" }} hackatime
+        </UiButtonSmall>
+        <p class="text-sm opacity-70">
+          {{
+            hackatime?.linked
+              ? "Your Hackatime account is linked. If your coding time isn't showing up, try reauthenticating."
+              : "You haven't linked a Hackatime account yet."
+          }}
+        </p>
+      </div>
 
       <div class="space-y-2">
         <h2 class="font-bold text-xl">accessibility</h2>
@@ -36,6 +50,7 @@ definePageMeta({
 
 const { clear } = useUserSession();
 const { reduceMotion, toggleReduceMotion } = useReduceMotion();
+const { data: hackatime } = await useFetch("/api/hackatime");
 
 async function logout() {
   await clear();
