@@ -1,7 +1,7 @@
 // Define tables here, then run `pnpm db:generate` + `pnpm db:migrate` (or `pnpm db:push`)
 // to apply them. See server/api/db.get.ts for query examples.
 import { sql } from 'drizzle-orm'
-import { boolean, index, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp } from 'drizzle-orm/pg-core'
 
 // Profile from Hack Club Auth, refreshed on every sign-in
 export interface UserIdentity {
@@ -49,3 +49,15 @@ export const projects = pgTable('projects', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('projects_user_id_idx').on(t.userId)])
+
+// Current state of the canvas, one row per pixel that's been drawn on. The server keeps
+// its own copy in memory (server/utils/canvas.ts); this is what it's loaded from on startup.
+export const canvasPixels = pgTable('canvas_pixels', {
+  x: smallint('x').notNull(),
+  y: smallint('y').notNull(),
+  // 0xRRGGBB
+  color: integer('color').notNull(),
+  // Who drew it last
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  placedAt: timestamp('placed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.x, t.y] })])

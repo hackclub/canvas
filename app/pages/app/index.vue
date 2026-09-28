@@ -1,7 +1,12 @@
 <template>
-  <div class="flex flex-col items-start gap-4 p-8">
-    <pre class="border-4 border-black p-4">{{ user }}</pre>
-    <UiButton icon="lucide:log-out" @click="logout">log out</UiButton>
+  <div class="flex justify-center w-full">
+    <div class="max-w-full w-250 px-8">
+      <div class="h-[calc(100dvh-6.5rem)] min-h-96 border-4 border-black">
+        <ClientOnly>
+          <CanvasBoard />
+        </ClientOnly>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -10,11 +15,4 @@ definePageMeta({
   middleware: "auth",
   layout: "app",
 });
-
-const { user, clear } = useUserSession();
-
-async function logout() {
-  await clear();
-  await navigateTo("/");
-}
 </script>
