@@ -6,11 +6,19 @@
     :class="props.inline ? '' : 'border-3'"
   >
     <span
-      class="absolute inset-0 origin-left scale-x-0 bg-white transition-transform duration-300 ease-in-out group-hover:origin-right group-hover:scale-x-100"
+      class="absolute inset-0 origin-left scale-x-0 bg-white transition-transform duration-300 ease-in-out"
+      :class="
+        props.groupHover
+          ? 'group-hover/button:origin-right group-hover/button:scale-x-100'
+          : 'group-hover:origin-right group-hover:scale-x-100'
+      "
     />
     <span
       :class="[
-        'relative z-10 flex items-center gap-1 transition-colors duration-200 ease-in-out group-hover:text-black',
+        'relative z-10 flex items-center gap-1 transition-colors duration-200 ease-in-out',
+        props.groupHover
+          ? 'group-hover/button:text-black'
+          : 'group-hover:text-black',
         contentClass,
       ]"
     >
@@ -66,6 +74,12 @@ const props = defineProps({
     default: "",
   },
   inline: {
+    type: Boolean,
+    default: false,
+  },
+  // Play the hover animation when a parent with the `group/button` class is hovered,
+  // instead of only when the button itself is
+  groupHover: {
     type: Boolean,
     default: false,
   },

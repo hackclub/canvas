@@ -1,6 +1,9 @@
 <template>
   <div class="flex justify-center">
-    <nav class="relative flex justify-between items-center max-w-full w-250">
+    <nav
+      class="relative flex justify-between items-center max-w-full transition-[width] duration-500 ease-in-out"
+      :class="fullWidth ? 'w-full' : 'w-250'"
+    >
       <div class="px-8 py-6">
         <SvgLogoCompact :width="60" />
       </div>
@@ -57,8 +60,12 @@ const { pixels, refreshPixels } = usePixels();
 // so re-check on each page change
 watch(() => route.path, refreshPixels);
 
+// the canvas gets the whole screen, so the nav stretches out to match it
+const fullWidth = computed(() => route.path == "/app/canvas");
+
 const links = computed(() => [
-  { to: "/app", label: "Canvas", active: route.path == "/app" },
+  { to: "/app", label: "Home", active: route.path == "/app" },
+  { to: "/app/canvas", label: "Canvas", active: route.path == "/app/canvas" },
   {
     to: "/app/projects",
     label: "Projects",

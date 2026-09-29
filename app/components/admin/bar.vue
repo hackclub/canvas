@@ -15,31 +15,6 @@
         ref="contentEl"
         class="flex w-max items-center gap-2 whitespace-nowrap pl-3 pr-0"
       >
-        <!-- placeholder -->
-        <UiButtonBasic icon="lucide:sparkles" class="border-white">
-          placeholder
-        </UiButtonBasic>
-
-        <!-- open the page's user in telescreen -->
-        <template v-if="subject">
-          <UiButtonBasic
-            v-if="subject.slackId"
-            :to="`https://telescreen.hackclub.com/subjects/${encodeURIComponent(subject.slackId)}`"
-            target="_blank"
-            class="border-white"
-          >
-            telescreen
-          </UiButtonBasic>
-          <UiButtonBasic
-            v-else
-            disabled
-            icon="lucide:external-link"
-            class="border-white opacity-50! cursor-not-allowed!"
-          >
-            no slack ID
-          </UiButtonBasic>
-        </template>
-
         <!-- open the page's project in telescreen's Hackatime workbench -->
         <template v-if="subject?.project">
           <UiButtonBasic
@@ -60,6 +35,26 @@
                 ? "no hackatime projects"
                 : "no hackatime ID"
             }}
+          </UiButtonBasic>
+        </template>
+
+        <!-- open the page's user in telescreen -->
+        <template v-if="subject">
+          <UiButtonBasic
+            v-if="subject.slackId"
+            :to="`https://telescreen.hackclub.com/subjects/${encodeURIComponent(subject.slackId)}`"
+            target="_blank"
+            class="border-white"
+          >
+            telescreen
+          </UiButtonBasic>
+          <UiButtonBasic
+            v-else
+            disabled
+            icon="lucide:external-link"
+            class="border-white opacity-50! cursor-not-allowed!"
+          >
+            no slack ID
           </UiButtonBasic>
         </template>
 

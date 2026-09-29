@@ -1,6 +1,6 @@
 // Shared between the canvas page and the server, so both agree on the board.
-export const CANVAS_WIDTH = 250
-export const CANVAS_HEIGHT = 250
+export const CANVAS_WIDTH = 350
+export const CANVAS_HEIGHT = 200
 
 // Colors people can draw with, in palette order. Pixels are stored as their RGB value
 // (not their index here), so this list can be reordered or changed later without
@@ -13,6 +13,7 @@ export const CANVAS_COLORS = [
   '#89bdff',
   '#dcb4ff',
   '#ffffff',
+  '#9badb7',
   '#000000',
 ] as const
 
