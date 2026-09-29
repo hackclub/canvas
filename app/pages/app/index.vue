@@ -3,67 +3,54 @@
     <div class="max-w-full w-250 px-8 py-3 space-y-4">
       <div class="grid gap-4 sm:grid-cols-2">
         <NuxtLink
-          to="/app/canvas"
+          v-for="card in cards"
+          :key="card.to"
+          :to="card.to"
           class="group/button min-h-40 no-underline! block bg-black text-white transition-colors"
         >
-          <div class="pixels flex flex-col p-5 w-full h-full">
+          <div class="flex flex-col p-5 w-full h-full" :class="card.bg">
             <h2 class="flex items-center gap-2 font-bold text-xl">
-              <Icon name="lucide:paintbrush" /> canvas
+              <Icon :name="card.icon" /> {{ card.title }}
             </h2>
             <p class="mt-1 mb-6 opacity-70">
-              Draw on the shared canvas, the end result gets put up at HQ!
+              {{ card.description }}
             </p>
             <UiButtonSmall
               class="border-white mt-auto self-start"
               icon="lucide:arrow-right"
               group-hover
             >
-              open the canvas
-            </UiButtonSmall>
-          </div>
-        </NuxtLink>
-        <NuxtLink
-          to="/app/shop"
-          class="group/button no-underline! block bg-black text-white transition-colors"
-        >
-          <div class="gift flex flex-col p-5 w-full h-full">
-            <h2 class="flex items-center gap-2 font-bold text-xl">
-              <Icon name="lucide:shopping-bag" /> shop
-            </h2>
-            <p class="mt-1 mb-6 opacity-70">
-              Ship projects to get bonus points, get loot in the shop.
-            </p>
-            <UiButtonSmall
-              class="border-white mt-auto self-start"
-              icon="lucide:arrow-right"
-              group-hover
-            >
-              get loot
+              {{ card.cta }}
             </UiButtonSmall>
           </div>
         </NuxtLink>
       </div>
 
-      <div class="space-y-2">
-        <h2 class="font-bold text-xl">to-do</h2>
-        <ul class="space-y-2">
-          <li
-            v-for="todo in todos"
-            :key="todo.label"
-            class="flex items-center gap-2"
-          >
-            <Icon
-              :name="todo.done ? 'lucide:square-check' : 'lucide:square'"
-              size="22"
-            />
-            <span
-              class="font-semibold"
-              :class="todo.done ? 'line-through opacity-60' : ''"
+      <div>
+        <div class="space-y-2 p-5 border-4 border-b-0 border-black">
+          <h2 class="font-bold text-xl">to-do</h2>
+          <ul class="space-y-2">
+            <li
+              v-for="todo in todos"
+              :key="todo.label"
+              class="flex items-center gap-2"
             >
-              {{ todo.label }}
-            </span>
-          </li>
-        </ul>
+              <Icon
+                :name="todo.done ? 'lucide:square-check' : 'lucide:square'"
+                size="22"
+              />
+              <span
+                class="font-semibold"
+                :class="todo.done ? 'line-through opacity-60' : ''"
+              >
+                {{ todo.label }}
+              </span>
+            </li>
+          </ul>
+        </div>
+        <div class="p-5 py-3 bg-black text-white">
+          <span>complete all items for 25 pixels!</span>
+        </div>
       </div>
     </div>
   </div>
@@ -75,6 +62,25 @@ definePageMeta({
   layout: "app",
 });
 
+const cards = [
+  {
+    to: "/app/canvas",
+    icon: "lucide:paintbrush",
+    title: "canvas",
+    description: "Draw on the shared canvas, the end result gets put up at HQ!",
+    cta: "open the canvas",
+    bg: "pixels",
+  },
+  {
+    to: "/app/shop",
+    icon: "lucide:shopping-bag",
+    title: "shop",
+    description: "Ship projects to get bonus points, get loot in the shop.",
+    cta: "get loot",
+    bg: "gift",
+  },
+];
+
 const { user } = useUserSession();
 const { data: projects } = await useFetch("/api/projects");
 const { data: hackatime } = await useFetch("/api/hackatime");
@@ -85,6 +91,7 @@ const todos = computed(() => [
   { label: "create your first project", done: !!projects.value?.length },
   { label: "draw on the canvas", done: false },
   { label: "ship your first project", done: false },
+  { label: "get some loot from the shop", done: false },
 ]);
 </script>
 
