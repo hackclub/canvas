@@ -40,6 +40,29 @@
           </UiButtonBasic>
         </template>
 
+        <!-- open the page's project in telescreen's Hackatime workbench -->
+        <template v-if="subject?.project">
+          <UiButtonBasic
+            v-if="projectTelescreenLink"
+            :to="projectTelescreenLink"
+            target="_blank"
+            class="border-white"
+          >
+            project telescreen
+          </UiButtonBasic>
+          <UiButtonBasic
+            v-else
+            disabled
+            class="border-white opacity-50! cursor-not-allowed!"
+          >
+            {{
+              subject.project.hackatimeId
+                ? "no hackatime projects"
+                : "no hackatime ID"
+            }}
+          </UiButtonBasic>
+        </template>
+
         <!-- open in admin -->
         <UiButtonBasic
           :to="adminLink"
@@ -59,6 +82,15 @@
 const route = useRoute();
 const { user } = useUserSession();
 const subject = useAdminSubject();
+
+// e.g. /workbench/hackatime/overview?u=4085&p=project_one,project_two
+// Built by hand so the commas between projects aren't encoded as %2C
+const projectTelescreenLink = computed(() => {
+  const project = subject.value?.project;
+  if (!project?.hackatimeId || !project.hackatimeProjects.length) return null;
+  const p = project.hackatimeProjects.map(encodeURIComponent).join(",");
+  return `https://telescreen.hackclub.com/workbench/hackatime/overview?u=${project.hackatimeId}&p=${p}`;
+});
 
 // Where "open in admin panel" goes for the current page. Add cases as admin pages get made.
 const adminLink = computed(() => {

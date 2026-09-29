@@ -67,7 +67,14 @@ if (error.value) {
 }
 
 setAdminSubject(
-  () => project.value && { slackId: project.value.owner.slackId },
+  () =>
+    project.value && {
+      slackId: project.value.owner.slackId,
+      project: {
+        hackatimeId: project.value.owner.hackatimeId,
+        hackatimeProjects: project.value.hackatimeProjects,
+      },
+    },
 );
 
 const ownerName = computed(() => {

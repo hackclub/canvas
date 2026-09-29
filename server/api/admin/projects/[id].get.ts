@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
             id: schema.users.id,
             identity: schema.users.identity,
             slackId: schema.users.slackId,
+            hackatimeId: schema.users.hackatimeId,
           },
         })
         .from(schema.projects)

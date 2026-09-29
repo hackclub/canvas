@@ -1,8 +1,14 @@
 export interface AdminSubject {
   slackId: string | null;
+  // Set on project pages, for the project telescreen button
+  project?: {
+    // The owner's Hackatime user ID
+    hackatimeId: number | null;
+    hackatimeProjects: string[];
+  };
 }
 
-// The user the current page is about, for the admin bar's user buttons (like telescreen).
+// The user (and project, if any) the current page is about, for the admin bar's buttons.
 // Pages call setAdminSubject() with a getter; it's cleared when the page unmounts.
 export function useAdminSubject() {
   return useState<AdminSubject | null>("admin-subject", () => null);
