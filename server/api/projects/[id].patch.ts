@@ -6,6 +6,7 @@ type ProjectUpdate = Partial<typeof schema.projects.$inferInsert>
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const project = await requireOwnProject(event, user.id)
+  await requireNotShipping(project.id)
   const body = (await readBody<Record<string, unknown>>(event)) ?? {}
 
   const update: ProjectUpdate = {}

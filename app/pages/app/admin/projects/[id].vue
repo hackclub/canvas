@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center w-full">
-    <div v-if="project" class="max-w-full w-250 px-8 py-3 space-y-4">
+    <div v-if="project" class="max-w-full w-250 px-4 md:px-8 py-3 space-y-4">
       <UiCard>
         <NuxtLink
           to="/app/admin/projects"
@@ -17,6 +17,46 @@
           >
         </p>
       </UiCard>
+
+      <div v-if="pendingShip" class="border-4 border-black p-5 space-y-3">
+        <h2 class="flex items-center gap-2 font-bold text-xl">
+          <Icon name="lucide:rocket" /> shipped, waiting for review
+        </h2>
+        <p class="opacity-70">
+          Shipped {{ new Date(pendingShip.createdAt).toLocaleString() }}. Try
+          the demo and check the project works before approving it. The project
+          is locked until you review it.
+        </p>
+        <label class="block">
+          <span class="font-semibold">Feedback</span>
+          <span class="opacity-70"> (shown to them, needed to reject)</span>
+          <textarea
+            v-model="feedback"
+            rows="3"
+            maxlength="5000"
+            class="mt-1 block w-full border-3 border-black px-3 py-2 outline-none"
+          />
+        </label>
+        <p v-if="reviewError" class="text-red-600">{{ reviewError }}</p>
+        <div class="flex gap-2">
+          <UiButtonSmall
+            icon="lucide:check"
+            class="disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="reviewing"
+            @click="review('approved')"
+          >
+            approve
+          </UiButtonSmall>
+          <UiButtonSmall
+            icon="lucide:x"
+            class="disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="reviewing || !feedback.trim()"
+            @click="review('rejected')"
+          >
+            reject
+          </UiButtonSmall>
+        </div>
+      </div>
 
       <img
         v-if="project.bannerKey"
@@ -45,6 +85,32 @@
           </dd>
         </div>
       </dl>
+
+      <div v-if="reviewedShips.length" class="border-4 border-black">
+        <h2 class="px-4 py-3 font-bold text-xl border-b-2 border-black">
+          past ships
+        </h2>
+        <div
+          v-for="ship in reviewedShips"
+          :key="ship.id"
+          class="px-4 py-3 border-b-2 border-black last:border-b-0"
+        >
+          <p>
+            <b>{{ ship.status }}</b>
+            <span class="opacity-70">
+              by
+              {{
+                ship.reviewer ? personName(ship.reviewer) : "a deleted admin"
+              }}
+              · {{ new Date(ship.reviewedAt!).toLocaleString() }} (shipped
+              {{ new Date(ship.createdAt).toLocaleString() }})
+            </span>
+          </p>
+          <p v-if="ship.feedback" class="mt-1 whitespace-pre-wrap">
+            {{ ship.feedback }}
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -57,7 +123,11 @@ definePageMeta({
 
 const route = useRoute();
 const id = route.params.id as string;
-const { data: project, error } = await useFetch(`/api/admin/projects/${id}`);
+const {
+  data: project,
+  error,
+  refresh,
+} = await useFetch(`/api/admin/projects/${id}`);
 if (error.value) {
   throw createError({
     statusCode: error.value.statusCode ?? 500,
@@ -77,14 +147,50 @@ setAdminSubject(
     },
 );
 
-const ownerName = computed(() => {
-  const owner = project.value?.owner;
+function personName(person: {
+  id: string;
+  identity: { first_name?: string; last_name?: string };
+}) {
   return (
-    [owner?.identity.first_name, owner?.identity.last_name]
+    [person.identity.first_name, person.identity.last_name]
       .filter(Boolean)
-      .join(" ") || owner?.id
+      .join(" ") || person.id
   );
-});
+}
+
+const ownerName = computed(
+  () => project.value && personName(project.value.owner),
+);
+
+const pendingShip = computed(() =>
+  project.value?.ships.find((s) => s.status === "pending"),
+);
+const reviewedShips = computed(
+  () => project.value?.ships.filter((s) => s.status !== "pending") ?? [],
+);
+
+const feedback = ref("");
+const reviewing = ref(false);
+const reviewError = ref("");
+
+async function review(status: "approved" | "rejected") {
+  reviewing.value = true;
+  reviewError.value = "";
+  try {
+    await $fetch(`/api/admin/ships/${pendingShip.value!.id}`, {
+      method: "PATCH",
+      body: { status, feedback: feedback.value },
+    });
+    feedback.value = "";
+    await refresh();
+  } catch (e) {
+    reviewError.value =
+      (e as { data?: { message?: string } }).data?.message ??
+      "Something went wrong, try again!";
+  } finally {
+    reviewing.value = false;
+  }
+}
 
 const fields = computed(() => {
   const p = project.value;

@@ -22,6 +22,17 @@ export async function requireOwnProject(event: H3Event, userId: string) {
   return project
 }
 
+// 409s if the project has a ship in review, since it's locked until the review is done
+export async function requireNotShipping(projectId: number) {
+  const pending = await useDB().query.ships.findFirst({
+    where: and(eq(schema.ships.projectId, projectId), eq(schema.ships.status, 'pending')),
+    columns: { id: true },
+  })
+  if (pending) {
+    throw createError({ statusCode: 409, statusMessage: "This project is being reviewed, so it can't be changed until the review is done" })
+  }
+}
+
 export function parseProjectName(value: unknown) {
   const name = typeof value === 'string' ? value.trim() : ''
   if (!name || name.length > MAX_NAME_LENGTH) {

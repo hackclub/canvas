@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const project = await requireOwnProject(event, user.id)
+  await requireNotShipping(project.id)
 
   const [updated] = await useDB()
     .update(schema.projects)

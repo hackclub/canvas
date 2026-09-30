@@ -16,6 +16,7 @@ function tooLarge() {
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const project = await requireOwnProject(event, user.id)
+  await requireNotShipping(project.id)
 
   if (Number(getRequestHeader(event, 'content-length')) > MAX_UPLOAD_BYTES) {
     throw tooLarge()

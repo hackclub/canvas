@@ -4,7 +4,7 @@
     tabindex="0"
     aria-label="admin bar"
     @mousedown.prevent
-    class="group fixed bottom-6 right-0 z-50 flex items-center rounded-l-full bg-black py-2 pl-3 text-white outline-none"
+    class="group fixed bottom-24 md:bottom-6 right-0 z-50 flex items-center rounded-l-full bg-black py-2 pl-3 text-white outline-none"
   >
     <Icon name="lucide:shield" :size="22" class="shrink-0" />
     <div

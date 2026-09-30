@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center w-full">
-    <div class="max-w-full w-250 px-8 py-3 space-y-4">
+    <div class="max-w-full w-250 px-4 md:px-8 py-3 space-y-4">
       <UiCard>
         <NuxtLink
           to="/app/admin"

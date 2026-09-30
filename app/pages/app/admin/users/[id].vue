@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center w-full">
-    <div v-if="u" class="max-w-full w-250 px-8 py-3 space-y-4">
+    <div v-if="u" class="max-w-full w-250 px-4 md:px-8 py-3 space-y-4">
       <UiCard>
         <NuxtLink
           to="/app/admin/users"
@@ -23,7 +23,11 @@
       </UiCard>
 
       <dl class="grid gap-4 sm:grid-cols-3">
-        <div v-for="stat in stats" :key="stat.label" class="border-4 border-black p-4">
+        <div
+          v-for="stat in stats"
+          :key="stat.label"
+          class="border-4 border-black p-4"
+        >
           <dt class="opacity-70">{{ stat.label }}</dt>
           <dd class="font-bold text-2xl">{{ stat.value }}</dd>
         </div>
@@ -226,6 +230,9 @@ async function toggleAdmin() {
 const stats = computed(() => [
   { label: "pixels", value: u.value?.pixels ?? 0 },
   { label: "admin", value: u.value?.isAdmin ? "yes" : "no" },
-  { label: "hackatime", value: u.value?.hackatimeLinked ? "linked" : "not linked" },
+  {
+    label: "hackatime",
+    value: u.value?.hackatimeLinked ? "linked" : "not linked",
+  },
 ]);
 </script>

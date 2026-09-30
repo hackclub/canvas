@@ -47,25 +47,80 @@
       >
         {{ error }}
       </p>
-      <div class="flex gap-2 border-4 border-black bg-white p-2">
-        <button
-          v-for="(color, i) in CANVAS_COLORS"
-          :key="color"
-          type="button"
-          :title="`${color} (${i + 1})`"
-          :aria-label="`color ${color}`"
-          :aria-pressed="selected === i"
-          class="size-9 cursor-pointer border-3 border-black transition-transform"
-          :class="selected === i ? '-translate-y-1.5 shadow-[0_4px_0_black]' : ''"
-          :style="{ backgroundColor: color }"
-          @click="selected = selected === i ? null : i"
-        />
-      </div>
+      <template v-if="editing">
+        <div class="flex gap-2 border-4 border-black bg-white p-2">
+          <button
+            v-for="(color, i) in CANVAS_COLORS"
+            :key="color"
+            type="button"
+            :title="`${color} (${i + 1})`"
+            :aria-label="`color ${color}`"
+            :aria-pressed="tool === i"
+            class="size-9 cursor-pointer border-3 border-black transition-transform"
+            :class="tool === i ? '-translate-y-1.5 shadow-[0_4px_0_black]' : ''"
+            :style="{ backgroundColor: color }"
+            @click="tool = i"
+          />
+          <button
+            type="button"
+            title="eraser (e)"
+            aria-label="eraser"
+            :aria-pressed="tool === 'eraser'"
+            class="flex size-9 cursor-pointer items-center justify-center border-3 border-black bg-white transition-transform"
+            :class="
+              tool === 'eraser' ? '-translate-y-1.5 shadow-[0_4px_0_black]' : ''
+            "
+            @click="tool = 'eraser'"
+          >
+            <Icon name="lucide:eraser" :size="20" />
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            title="undo (ctrl+z)"
+            aria-label="undo"
+            :disabled="!canUndo"
+            class="flex size-8 cursor-pointer items-center justify-center border-3 border-black bg-white disabled:cursor-default disabled:opacity-40"
+            @click="undo"
+          >
+            <Icon name="lucide:undo-2" :size="18" />
+          </button>
+          <button
+            type="button"
+            title="redo (ctrl+shift+z)"
+            aria-label="redo"
+            :disabled="!canRedo"
+            class="flex size-8 cursor-pointer items-center justify-center border-3 border-black bg-white disabled:cursor-default disabled:opacity-40"
+            @click="redo"
+          >
+            <Icon name="lucide:redo-2" :size="18" />
+          </button>
+          <UiButtonBasic
+            icon="lucide:x"
+            content-class="bg-white! text-black!"
+            @click="discard"
+          >
+            {{ draftSize ? "discard" : "done" }}
+          </UiButtonBasic>
+          <UiButtonSmall
+            icon="lucide:check"
+            :disabled="!draftSize"
+            class="disabled:cursor-default disabled:opacity-40"
+            @click="confirmDraft"
+          >
+            confirm {{ draftSize }} {{ draftSize === 1 ? "pixel" : "pixels" }}
+          </UiButtonSmall>
+        </div>
+      </template>
+      <UiButtonSmall v-else icon="lucide:pencil" @click="editing = true">
+        draw
+      </UiButtonSmall>
       <p class="bg-white/80 px-2 text-xs opacity-70">
         {{
-          selected === null
-            ? "pick a color to draw · drag to move · scroll to zoom"
-            : "click or drag to draw · right-click drag or hold space to move · esc to stop"
+          editing
+            ? "click or drag to draw · right-click drag or hold space to move · ctrl+z to undo · enter to confirm"
+            : "drag to move · scroll to zoom · press draw (or 1–9) to start drawing"
         }}
       </p>
     </div>
@@ -76,8 +131,6 @@
 import { NuxtLink } from "#components";
 
 const MAX_SCALE = 64;
-// How long drawn pixels wait before being sent, so a drag goes out as one request
-const SEND_DELAY = 150;
 
 const { pixels, pending, setPixels } = usePixels();
 
@@ -85,7 +138,13 @@ const viewportEl = ref<HTMLDivElement>();
 const screenEl = ref<HTMLCanvasElement>();
 const loaded = ref(false);
 const error = ref("");
-const selected = ref<number | null>(null);
+// In edit mode, drawing goes into a draft that only gets sent once it's confirmed
+const editing = ref(false);
+// A palette index, or the eraser (which takes pixels back out of the draft)
+const tool = ref<number | "eraser">(0);
+const draftSize = ref(0);
+const canUndo = ref(false);
+const canRedo = ref(false);
 const hover = ref<{ x: number; y: number } | null>(null);
 const outOfPixels = ref(false);
 const panning = ref(false);
@@ -99,11 +158,13 @@ let ctx: CanvasRenderingContext2D;
 let screenCtx: CanvasRenderingContext2D;
 
 // --- board state ---
-// What the server has (RGB bytes, 3 per pixel), and this user's drawn pixels on top of it
-// that are waiting to be sent or waiting on a response. Keys are y * width + x.
+// What the server has (RGB bytes, 3 per pixel), and this user's pixels on top of it:
+// confirmed ones waiting to be sent or waiting on a response, and the draft they're
+// still editing on top of those. Keys are y * width + x.
 let confirmed = new Uint8Array(CANVAS_WIDTH * CANVAS_HEIGHT * 3).fill(0xff);
 const queued = new Map<number, number>();
 const inflight = new Map<number, number>();
+const draft = new Map<number, number>();
 
 function confirmedColor(i: number) {
   return (
@@ -117,13 +178,13 @@ function setConfirmed(i: number, color: number) {
   confirmed[i * 3 + 2] = color & 0xff;
 }
 
-// The color this user sees, ignoring anything still in `queued`
-function colorUnderQueue(i: number) {
-  return inflight.get(i) ?? confirmedColor(i);
+// The color this user would see without their draft
+function colorUnderDraft(i: number) {
+  return queued.get(i) ?? inflight.get(i) ?? confirmedColor(i);
 }
 
 function shownColor(i: number) {
-  return queued.get(i) ?? colorUnderQueue(i);
+  return draft.get(i) ?? colorUnderDraft(i);
 }
 
 function drawPixel(i: number, color: number) {
@@ -143,6 +204,7 @@ function redrawAll() {
   ctx.putImageData(image, 0, 0);
   for (const [i, color] of inflight) drawPixel(i, color);
   for (const [i, color] of queued) drawPixel(i, color);
+  for (const [i, color] of draft) drawPixel(i, color);
   scheduleRender();
 }
 
@@ -151,7 +213,7 @@ function applyUpdates(updates: number[]) {
   for (let k = 0; k < updates.length; k += 3) {
     const i = updates[k + 1]! * CANVAS_WIDTH + updates[k]!;
     setConfirmed(i, updates[k + 2]!);
-    if (!queued.has(i) && !inflight.has(i)) drawPixel(i, updates[k + 2]!);
+    drawPixel(i, shownColor(i));
   }
 }
 
@@ -191,40 +253,123 @@ function connect() {
 }
 
 // --- drawing ---
-let sendTimer: ReturnType<typeof setTimeout> | undefined;
+// Draft values for each pixel a stroke touched, before and after it (undefined means
+// not in the draft), so it can be undone and redone
+type Stroke = {
+  before: Map<number, number | undefined>;
+  after: Map<number, number | undefined>;
+};
+let stroke: Stroke | undefined;
+let undoStack: Stroke[] = [];
+let redoStack: Stroke[] = [];
 
 function updatePending() {
-  pending.value = queued.size + inflight.size;
+  pending.value = draft.size + queued.size + inflight.size;
+  draftSize.value = draft.size;
+  canUndo.value = undoStack.length > 0;
+  canRedo.value = redoStack.length > 0;
+}
+
+function setDraft(i: number, color: number | undefined) {
+  if (color === undefined) draft.delete(i);
+  else draft.set(i, color);
+  drawPixel(i, shownColor(i));
 }
 
 function paint(x: number, y: number) {
-  if (selected.value === null) return;
+  if (!editing.value) return;
   if (x < 0 || y < 0 || x >= CANVAS_WIDTH || y >= CANVAS_HEIGHT) return;
   const i = y * CANVAS_WIDTH + x;
-  const color = hexToRgb(CANVAS_COLORS[selected.value]!);
+  const under = colorUnderDraft(i);
+  const color =
+    tool.value === "eraser" ? under : hexToRgb(CANVAS_COLORS[tool.value]!);
   if (shownColor(i) === color) return;
 
-  if (color === colorUnderQueue(i)) {
-    // Drawing back over your own unsent pixel is free
-    queued.delete(i);
-  } else if (!queued.has(i)) {
-    if (pixels.value <= 0) {
-      outOfPixels.value = true;
-      return;
-    }
-    queued.set(i, color);
-  } else {
-    queued.set(i, color);
+  // Drawing back to what's underneath takes the pixel out of the draft, so it's free
+  const next = color === under ? undefined : color;
+  if (next !== undefined && !draft.has(i) && pixels.value <= 0) {
+    outOfPixels.value = true;
+    return;
   }
-  drawPixel(i, color);
+  stroke ??= { before: new Map(), after: new Map() };
+  if (!stroke.before.has(i)) stroke.before.set(i, draft.get(i));
+  stroke.after.set(i, next);
+  setDraft(i, next);
   updatePending();
-  sendTimer ??= setTimeout(send, SEND_DELAY);
+}
+
+function endStroke() {
+  if (!stroke) return;
+  undoStack.push(stroke);
+  redoStack = [];
+  stroke = undefined;
+  updatePending();
+}
+
+// Puts the draft back the way `changes` says, unless that needs more pixels than they have
+function applyChanges(changes: Map<number, number | undefined>) {
+  let cost = 0;
+  for (const [i, color] of changes) {
+    if (color !== undefined && !draft.has(i)) cost++;
+    else if (color === undefined && draft.has(i)) cost--;
+  }
+  if (cost > pixels.value) {
+    outOfPixels.value = true;
+    return false;
+  }
+  for (const [i, color] of changes) setDraft(i, color);
+  return true;
+}
+
+function undo() {
+  endStroke();
+  const last = undoStack.at(-1);
+  if (!last || !applyChanges(last.before)) return;
+  redoStack.push(undoStack.pop()!);
+  updatePending();
+}
+
+function redo() {
+  const next = redoStack.at(-1);
+  if (!next || !applyChanges(next.after)) return;
+  undoStack.push(redoStack.pop()!);
+  updatePending();
+}
+
+function clearDraft() {
+  stroke = undefined;
+  undoStack = [];
+  redoStack = [];
+  const indices = [...draft.keys()];
+  draft.clear();
+  for (const i of indices) drawPixel(i, shownColor(i));
+  updatePending();
+}
+
+function discard() {
+  endStroke();
+  if (
+    draft.size &&
+    !window.confirm(`throw away the ${draft.size} pixels you've drawn?`)
+  ) {
+    return;
+  }
+  clearDraft();
+  editing.value = false;
+}
+
+function confirmDraft() {
+  endStroke();
+  if (!draft.size) return;
+  for (const [i, color] of draft) queued.set(i, color);
+  // They're queued now, so this just resets the draft without changing what's shown
+  clearDraft();
+  editing.value = false;
+  send();
 }
 
 // Only one request at a time, so balances from responses always come back in order
 async function send() {
-  clearTimeout(sendTimer);
-  sendTimer = undefined;
   if (inflight.size || !queued.size) return;
 
   for (const [i, color] of queued) {
@@ -234,6 +379,7 @@ async function send() {
   }
 
   let rejected: Set<number>;
+  let failed = false;
   try {
     const res = await $fetch("/api/canvas", {
       method: "POST",
@@ -251,19 +397,27 @@ async function send() {
     error.value = "";
   } catch (e) {
     rejected = new Set(inflight.keys());
+    failed = true;
     error.value =
       (e as { data?: { message?: string } }).data?.message ??
-      "couldn't draw those pixels, try again!";
+      "couldn't draw those pixels, press confirm to try again!";
   }
 
+  // If the request failed, hand everything unsent back as a draft so they can retry
+  // without redrawing it. If they just couldn't afford some, take those off the board.
+  if (failed) {
+    // Newest first: the draft, then queued, then what was just sent
+    for (const [i, color] of [...queued, ...inflight]) {
+      if (!draft.has(i)) draft.set(i, color);
+    }
+    queued.clear();
+    editing.value = true;
+  }
   for (const [i, color] of inflight) {
     if (!rejected.has(i)) setConfirmed(i, color);
   }
   inflight.clear();
-  // Put back whatever the server didn't take
-  for (const i of rejected) {
-    if (!queued.has(i)) drawPixel(i, confirmedColor(i));
-  }
+  for (const i of rejected) drawPixel(i, shownColor(i));
   updatePending();
   if (queued.size) send();
 }
@@ -322,9 +476,13 @@ function render() {
   c.setTransform(dpr * view.scale, 0, 0, dpr * view.scale, dpr * view.x, dpr * view.y);
   c.drawImage(board, 0, 0);
 
-  if (hover.value && selected.value !== null && loaded.value) {
+  if (hover.value && editing.value && loaded.value) {
     const { x, y } = hover.value;
-    c.fillStyle = CANVAS_COLORS[selected.value]!;
+    // The eraser previews what the pixel would go back to
+    c.fillStyle =
+      tool.value === "eraser"
+        ? rgbToHex(colorUnderDraft(y * CANVAS_WIDTH + x))
+        : CANVAS_COLORS[tool.value]!;
     c.fillRect(x, y, 1, 1);
     // 1 screen pixel wide, just outside the pixel
     const line = 1 / view.scale;
@@ -334,7 +492,7 @@ function render() {
   }
 }
 
-watch([hover, selected, loaded], scheduleRender);
+watch([hover, editing, tool, loaded], scheduleRender);
 
 // --- panning and zooming ---
 const view = { x: 0, y: 0, scale: 1 };
@@ -374,7 +532,7 @@ function zoomAt(px: number, py: number, factor: number) {
 
 const cursorClass = computed(() => {
   if (panning.value) return "cursor-grabbing";
-  if (spaceHeld.value || selected.value === null) return "cursor-grab";
+  if (spaceHeld.value || !editing.value) return "cursor-grab";
   return "cursor-crosshair";
 });
 
@@ -433,7 +591,7 @@ function onPointerDown(e: PointerEvent) {
   }
 
   if (pointers.size > 1) return;
-  if (e.button === 0 && selected.value !== null && !spaceHeld.value) {
+  if (e.button === 0 && editing.value && !spaceHeld.value) {
     mode = "draw";
     lastPixel = boardPoint(p);
     paint(lastPixel.x, lastPixel.y);
@@ -494,6 +652,8 @@ function onPointerUp(e: PointerEvent) {
   } else if (!pointers.size) {
     mode = "none";
     panning.value = false;
+    // Everything drawn since the pointer went down undoes as one step
+    endStroke();
   }
 }
 
@@ -515,15 +675,45 @@ function isTyping(e: KeyboardEvent) {
 
 function onKeyDown(e: KeyboardEvent) {
   if (isTyping(e)) return;
+  const key = e.key.toLowerCase();
   if (e.code === "Space") {
     e.preventDefault();
     spaceHeld.value = true;
-  } else if (e.key === "Escape") {
-    selected.value = null;
+  } else if ((e.ctrlKey || e.metaKey) && (key === "y" || (key === "z" && e.shiftKey))) {
+    if (!editing.value) return;
+    e.preventDefault();
+    redo();
+  } else if ((e.ctrlKey || e.metaKey) && key === "z") {
+    if (!editing.value) return;
+    e.preventDefault();
+    undo();
+  } else if (e.ctrlKey || e.metaKey || e.altKey) {
+    return;
+  } else if (e.key === "Enter" && editing.value) {
+    confirmDraft();
+  } else if (e.key === "Escape" && editing.value) {
+    // Leaving with a draft goes through discard, so it asks first
+    discard();
+  } else if (key === "e") {
+    editing.value = true;
+    tool.value = "eraser";
   } else if (/^[1-9]$/.test(e.key) && Number(e.key) <= CANVAS_COLORS.length) {
-    selected.value = Number(e.key) - 1;
+    editing.value = true;
+    tool.value = Number(e.key) - 1;
   }
 }
+
+// Unconfirmed pixels only live in this tab, so check before leaving with any
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (draft.size || queued.size || inflight.size) e.preventDefault();
+}
+
+onBeforeRouteLeave(() => {
+  if (!draft.size) return true;
+  return window.confirm(
+    `you haven't confirmed the ${draft.size} pixels you've drawn. leave anyway?`,
+  );
+});
 
 function onKeyUp(e: KeyboardEvent) {
   if (e.code === "Space") spaceHeld.value = false;
@@ -551,6 +741,7 @@ onMounted(() => {
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("blur", onBlur);
+  window.addEventListener("beforeunload", onBeforeUnload);
   connect();
 });
 
@@ -565,7 +756,11 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKeyDown);
   window.removeEventListener("keyup", onKeyUp);
   window.removeEventListener("blur", onBlur);
-  // Don't lose anything drawn right before leaving the page
+  window.removeEventListener("beforeunload", onBeforeUnload);
+  // The draft goes away with the page, so it shouldn't count against the balance anymore
+  draft.clear();
+  updatePending();
+  // Don't lose anything confirmed right before leaving the page
   if (queued.size) send();
 });
 </script>

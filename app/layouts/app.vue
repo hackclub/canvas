@@ -4,10 +4,10 @@
       class="relative flex justify-between items-center max-w-full transition-[width] duration-500 ease-in-out"
       :class="fullWidth ? 'w-full' : 'w-250'"
     >
-      <div class="px-8 py-6">
+      <div class="px-4 py-4 md:px-8 md:py-6">
         <SvgLogoCompact :width="60" />
       </div>
-      <div class="absolute left-1/2 -translate-x-1/2">
+      <div class="absolute left-1/2 -translate-x-1/2 hidden md:block">
         <div
           ref="linksEl"
           class="relative flex gap-2"
@@ -35,7 +35,7 @@
           >
         </div>
       </div>
-      <div class="px-8">
+      <div class="px-4 md:px-8">
         <div class="text-lg font-semibold bg-black text-white flex items-end">
           <NuxtImg src="/img/small-pixels.svg" width="36" />
           <div class="px-2 py-1 flex items-center">
@@ -45,7 +45,23 @@
       </div>
     </nav>
   </div>
-  <div>
+  <!-- phones don't have room for the links next to the logo, so they sit along the
+       bottom of the screen instead, scrolling sideways if they don't all fit -->
+  <nav
+    aria-label="Main"
+    class="md:hidden fixed bottom-0 inset-x-0 z-40 flex gap-2 overflow-x-auto bg-white border-t-4 border-black px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+  >
+    <NuxtLink
+      v-for="link in links"
+      :key="link.to"
+      :to="link.to"
+      class="no-underline! shrink-0 whitespace-nowrap text-lg px-3 py-1"
+      :class="link.active ? 'bg-black text-white' : ''"
+      >{{ link.label }}</NuxtLink
+    >
+  </nav>
+  <!-- leaves room at the bottom so the mobile nav doesn't cover the page -->
+  <div class="pb-20 md:pb-0">
     <slot />
   </div>
   <AdminBar />

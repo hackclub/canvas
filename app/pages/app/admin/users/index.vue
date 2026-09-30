@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center w-full">
-    <div class="max-w-full w-250 px-8 py-3 space-y-4">
+    <div class="max-w-full w-250 px-4 md:px-8 py-3 space-y-4">
       <UiCard>
         <NuxtLink
           to="/app/admin"
@@ -18,7 +18,10 @@
         class="w-full border-3 border-black px-3 py-2 outline-none"
       />
 
-      <div v-if="filtered.length" class="border-4 border-black divide-y-2 divide-black">
+      <div
+        v-if="filtered.length"
+        class="border-4 border-black divide-y-2 divide-black"
+      >
         <NuxtLink
           v-for="u in filtered"
           :key="u.id"

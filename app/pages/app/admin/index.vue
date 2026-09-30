@@ -44,5 +44,11 @@ const sections = [
     icon: "lucide:folder",
     description: "Every project, from every user",
   },
+  {
+    to: "/app/admin/ships",
+    label: "review queue",
+    icon: "lucide:rocket",
+    description: "Shipped projects waiting to be approved or rejected",
+  },
 ];
 </script>
