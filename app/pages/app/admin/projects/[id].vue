@@ -16,6 +16,11 @@
             >{{ ownerName }}</NuxtLink
           >
         </p>
+        <div v-if="latestShip" class="absolute top-8 right-8">
+          <UiButtonSmall class="border-3 border-white" @click="openManage">
+            manage
+          </UiButtonSmall>
+        </div>
       </UiCard>
 
       <div v-if="pendingShip" class="border-4 border-black p-5 space-y-3">
@@ -113,6 +118,67 @@
       </div>
     </div>
   </div>
+
+  <UiModal v-model="managing" title="manage project">
+    <template v-if="!overrideTo">
+      <div class="space-y-2">
+        <h3 class="font-bold text-lg">ship status</h3>
+        <p class="text-sm opacity-70">
+          The latest ship is <b>{{ latestShip?.status }}</b>, shipped
+          {{ latestShip && new Date(latestShip.createdAt).toLocaleString() }}.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <UiButtonSmall
+            v-for="option in statusOptions"
+            :key="option.status"
+            :icon="option.icon"
+            :disabled="latestShip?.status === option.status"
+            class="disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="chooseOverride(option.status)"
+          >
+            {{ option.label }}
+          </UiButtonSmall>
+        </div>
+        <p class="text-sm opacity-70">
+          Overrides the latest ship's status, e.g. to undo a mistaken review.
+        </p>
+      </div>
+    </template>
+
+    <!-- confirm step, shown in place so there's no modal on top of a modal -->
+    <template v-else>
+      <p>
+        <b>{{ project?.name }}</b>
+        {{ overrideEffects[overrideTo] }}
+      </p>
+      <label class="block">
+        <span class="font-semibold">Feedback</span>
+        <span class="opacity-70">
+          (shown to them{{ overrideTo === "rejected" ? ", needed to reject" : "" }})
+        </span>
+        <textarea
+          v-model="overrideFeedback"
+          rows="3"
+          maxlength="5000"
+          class="mt-1 block w-full border-3 border-black px-3 py-2 outline-none"
+        />
+      </label>
+      <div class="flex gap-2">
+        <UiButtonSmall
+          class="disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="
+            overriding || (overrideTo === 'rejected' && !overrideFeedback.trim())
+          "
+          @click="saveOverride"
+        >
+          {{ overriding ? "saving..." : `set to ${overrideTo}` }}
+        </UiButtonSmall>
+        <UiButtonSmall @click="overrideTo = null">back</UiButtonSmall>
+      </div>
+    </template>
+
+    <p v-if="overrideError" class="text-red-600">{{ overrideError }}</p>
+  </UiModal>
 </template>
 
 <script setup lang="ts">
@@ -189,6 +255,65 @@ async function review(status: "approved" | "rejected") {
       "Something went wrong, try again!";
   } finally {
     reviewing.value = false;
+  }
+}
+
+type ShipStatus = "pending" | "approved" | "rejected";
+
+const latestShip = computed(() => project.value?.ships[0]);
+
+const statusOptions: { status: ShipStatus; label: string; icon: string }[] = [
+  { status: "pending", label: "pending", icon: "lucide:hourglass" },
+  { status: "approved", label: "approved", icon: "lucide:check" },
+  { status: "rejected", label: "rejected", icon: "lucide:x" },
+];
+const overrideEffects: Record<ShipStatus, string> = {
+  pending:
+    "will go back in the review queue, and its owner won't be able to edit it until it's reviewed again.",
+  approved:
+    "will be marked as approved. Its owner can edit it and ship it again.",
+  rejected:
+    "will be marked as rejected. Its owner can edit it and ship it again.",
+};
+
+const managing = ref(false);
+const overrideTo = ref<ShipStatus | null>(null);
+const overrideFeedback = ref("");
+const overriding = ref(false);
+const overrideError = ref("");
+
+function openManage() {
+  overrideTo.value = null;
+  overrideError.value = "";
+  managing.value = true;
+}
+
+function chooseOverride(status: ShipStatus) {
+  overrideTo.value = status;
+  overrideFeedback.value = latestShip.value?.feedback ?? "";
+  overrideError.value = "";
+}
+
+async function saveOverride() {
+  overriding.value = true;
+  overrideError.value = "";
+  try {
+    await $fetch(`/api/admin/ships/${latestShip.value!.id}`, {
+      method: "PATCH",
+      body: {
+        status: overrideTo.value,
+        feedback: overrideFeedback.value,
+        override: true,
+      },
+    });
+    await refresh();
+    managing.value = false;
+  } catch (e) {
+    overrideError.value =
+      (e as { data?: { message?: string } }).data?.message ??
+      "Something went wrong, try again!";
+  } finally {
+    overriding.value = false;
   }
 }
 
