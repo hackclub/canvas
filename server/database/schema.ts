@@ -23,6 +23,12 @@ export const users = pgTable('users', {
   hackatime: jsonb('hackatime').$type<UserHackatime>(),
   // From Hack Club Auth on sign-in, null if they haven't linked Slack
   slackId: text('slack_id'),
+  // Slack display name, refreshed from Slack on every sign-in. Null if they haven't linked
+  // Slack or haven't set one.
+  slackDisplayName: text('slack_display_name'),
+  // Set by the user in account settings, shown instead of their Slack display name.
+  // Use publicName() (server/utils/users.ts) rather than reading these two directly.
+  displayNameOverride: text('display_name_override'),
   // Hackatime user ID, set by /auth/hackatime
   hackatimeId: integer('hackatime_id'),
   // Pixels currency balance

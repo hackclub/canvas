@@ -69,15 +69,19 @@ export default defineEventHandler(async (event) => {
   // Keep the stored name in sync with Hack Club Auth on every sign-in
   const userIdentity = { first_name: identity.first_name, last_name: identity.last_name }
   const slackId = identity.slack_id || null
+  // Refreshed on every sign-in too. If Slack can't be reached (undefined), the cached
+  // name is left as it is rather than wiped.
+  const slackDisplayName = slackId ? await fetchSlackDisplayName(slackId) : null
   const [dbUser] = await useDB()
     .insert(schema.users)
-    .values({ id: identity.id, identity: userIdentity, slackId })
+    .values({ id: identity.id, identity: userIdentity, slackId, slackDisplayName })
     .onConflictDoUpdate({
       target: schema.users.id,
       set: {
         // Merge so fields added to `identity` later aren't wiped
         identity: sql`${schema.users.identity} || ${JSON.stringify(userIdentity)}::jsonb`,
         slackId,
+        ...(slackDisplayName !== undefined && { slackDisplayName }),
       },
     })
     .returning({ isAdmin: schema.users.isAdmin })

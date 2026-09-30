@@ -27,6 +27,10 @@ export default defineNuxtConfig({
       clientId: process.env.HACKATIME_CLIENT_ID ?? '',
       clientSecret: process.env.HACKATIME_CLIENT_SECRET ?? '',
     },
+    // Slack bot token, for looking up display names; overridable with NUXT_SLACK_BOT_TOKEN
+    slack: {
+      botToken: process.env.SLACK_XOXB ?? '',
+    },
     // Cloudflare R2 (S3-compatible) for uploaded images; overridable with NUXT_R2_*
     r2: {
       endpoint: process.env.R2_ENDPOINT ?? '',
