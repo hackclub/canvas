@@ -124,7 +124,8 @@
       <div class="space-y-2">
         <h3 class="font-bold text-lg">ship status</h3>
         <p class="text-sm opacity-70">
-          The latest ship is <b>{{ latestShip?.status }}</b>, shipped
+          The latest ship is <b>{{ latestShip?.status }}</b
+          >, shipped
           {{ latestShip && new Date(latestShip.createdAt).toLocaleString() }}.
         </p>
         <div class="flex flex-wrap gap-2">
@@ -154,7 +155,9 @@
       <label class="block">
         <span class="font-semibold">Feedback</span>
         <span class="opacity-70">
-          (shown to them{{ overrideTo === "rejected" ? ", needed to reject" : "" }})
+          (shown to them{{
+            overrideTo === "rejected" ? ", needed to reject" : ""
+          }})
         </span>
         <textarea
           v-model="overrideFeedback"
@@ -167,7 +170,8 @@
         <UiButtonSmall
           class="disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="
-            overriding || (overrideTo === 'rejected' && !overrideFeedback.trim())
+            overriding ||
+            (overrideTo === 'rejected' && !overrideFeedback.trim())
           "
           @click="saveOverride"
         >
