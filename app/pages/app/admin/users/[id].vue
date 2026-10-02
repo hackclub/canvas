@@ -55,36 +55,38 @@
 
   <UiModal v-model="managing" title="manage user">
     <template v-if="!confirmingAdmin">
-      <div class="space-y-2">
-        <h3 class="font-bold text-lg">pixels</h3>
-        <p class="text-sm opacity-70">Currently {{ u?.pixels }} pixels.</p>
+      <div v-for="b in balances" :key="b.field" class="space-y-2">
+        <h3 class="font-bold text-lg">{{ b.label }}</h3>
+        <p class="text-sm opacity-70">
+          Currently {{ u?.[b.field] }} {{ b.label }}.
+        </p>
         <input
-          v-model.number="pixelAmount"
+          v-model.number="amounts[b.field]"
           type="number"
           min="0"
           step="1"
-          aria-label="Amount of pixels"
+          :aria-label="`Amount of ${b.label}`"
           class="w-full border-3 border-black px-3 py-1 outline-none"
         />
         <div class="flex flex-wrap gap-2">
           <UiButtonSmall
             icon="lucide:plus"
             :disabled="saving"
-            @click="changePixels('give')"
+            @click="changeBalance(b.field, 'give')"
           >
             give
           </UiButtonSmall>
           <UiButtonSmall
             icon="lucide:minus"
             :disabled="saving"
-            @click="changePixels('take')"
+            @click="changeBalance(b.field, 'take')"
           >
             take
           </UiButtonSmall>
           <UiButtonSmall
             icon="lucide:equal"
             :disabled="saving"
-            @click="changePixels('set')"
+            @click="changeBalance(b.field, 'set')"
           >
             set to
           </UiButtonSmall>
@@ -118,7 +120,7 @@
         {{
           u?.isAdmin
             ? "will lose access to the admin panel."
-            : "will be able to see every user and project, and change anyone's pixels and admin status."
+            : "will be able to see every user and project, and change anyone's pixels, bonus points and admin status."
         }}
       </p>
       <div class="flex gap-2">
@@ -170,21 +172,31 @@ const name = computed(
       .join(" ") || "(no name)",
 );
 
-const pixelAmount = ref(0);
+// The balances admins can change, with what's typed in for each
+const balances = [
+  { field: "pixels", label: "pixels" },
+  { field: "bonusPoints", label: "bonus points" },
+] as const;
+type Balance = (typeof balances)[number]["field"];
+const amounts = reactive<Record<Balance, number>>({ pixels: 0, bonusPoints: 0 });
 const saving = ref(false);
 const saveError = ref("");
 const confirmingAdmin = ref(false);
 const managing = ref(false);
 
 function openManage() {
-  pixelAmount.value = 0;
+  amounts.pixels = 0;
+  amounts.bonusPoints = 0;
   saveError.value = "";
   confirmingAdmin.value = false;
   managing.value = true;
 }
 
+type BalanceChange = { op: "set" | "add"; amount: number };
+
 async function update(body: {
-  pixels?: { op: "set" | "add"; amount: number };
+  pixels?: BalanceChange;
+  bonusPoints?: BalanceChange;
   isAdmin?: boolean;
 }) {
   saving.value = true;
@@ -208,17 +220,18 @@ async function update(body: {
   }
 }
 
-async function changePixels(action: "give" | "take" | "set") {
-  const amount = pixelAmount.value;
+async function changeBalance(field: Balance, action: "give" | "take" | "set") {
+  const amount = amounts[field];
   if (!Number.isInteger(amount) || amount < 0) {
-    saveError.value = "Enter a whole number of pixels";
+    const { label } = balances.find((b) => b.field === field)!;
+    saveError.value = `Enter a whole number of ${label}`;
     return;
   }
-  const pixels =
+  const change: BalanceChange =
     action === "set"
-      ? { op: "set" as const, amount }
-      : { op: "add" as const, amount: action === "give" ? amount : -amount };
-  if (await update({ pixels })) pixelAmount.value = 0;
+      ? { op: "set", amount }
+      : { op: "add", amount: action === "give" ? amount : -amount };
+  if (await update({ [field]: change })) amounts[field] = 0;
 }
 
 async function toggleAdmin() {
@@ -229,6 +242,7 @@ async function toggleAdmin() {
 
 const stats = computed(() => [
   { label: "pixels", value: u.value?.pixels ?? 0 },
+  { label: "bonus points", value: u.value?.bonusPoints ?? 0 },
   { label: "admin", value: u.value?.isAdmin ? "yes" : "no" },
   {
     label: "hackatime",

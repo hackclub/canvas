@@ -6,7 +6,15 @@ export default defineEventHandler(async (event) => {
   const project = await requireOwnProject(event, user.id)
   return useDB().query.ships.findMany({
     where: eq(schema.ships.projectId, project.id),
-    columns: { id: true, status: true, feedback: true, createdAt: true, reviewedAt: true },
+    columns: {
+      id: true,
+      status: true,
+      feedback: true,
+      pixelsAwarded: true,
+      bonusPointsAwarded: true,
+      createdAt: true,
+      reviewedAt: true,
+    },
     orderBy: desc(schema.ships.createdAt),
   })
 })

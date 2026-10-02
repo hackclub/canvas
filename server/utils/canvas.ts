@@ -124,6 +124,12 @@ export function placePixels(userId: string, requested: PixelPlacement[]) {
             placedAt: sql`excluded.placed_at`,
           },
         })
+      await tx.insert(schema.pixelTransactions).values({
+        userId,
+        amount: -placed.length,
+        balance: updated!.pixels,
+        reason: 'canvas',
+      })
       return { placed, balance: updated!.pixels }
     })
 

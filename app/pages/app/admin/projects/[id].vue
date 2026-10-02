@@ -28,7 +28,11 @@
           <Icon name="lucide:rocket" /> shipped, waiting for review
         </h2>
         <p class="opacity-70">
-          Shipped {{ new Date(pendingShip.createdAt).toLocaleString() }}. Try
+          Shipped {{ new Date(pendingShip.createdAt).toLocaleString()
+          }}<template v-if="pendingShip.hackatimeSeconds !== null">
+            with {{ formatHours(pendingShip.hackatimeSeconds) }} hours</template
+          >. Approving pays them for the hours since their last approved
+          ship. Try
           the demo and check the project works before approving it. The project
           is locked until you review it.
         </p>
@@ -110,6 +114,14 @@
               · {{ new Date(ship.reviewedAt!).toLocaleString() }} (shipped
               {{ new Date(ship.createdAt).toLocaleString() }})
             </span>
+          </p>
+          <p v-if="ship.pixelsAwarded !== null" class="text-sm opacity-70">
+            paid {{ ship.pixelsAwarded.toLocaleString() }} pixels and
+            {{ ship.bonusPointsAwarded?.toLocaleString() }} bonus points<template
+              v-if="ship.hackatimeSeconds !== null"
+            >
+              for {{ formatHours(ship.hackatimeSeconds) }} hours total</template
+            >
           </p>
           <p v-if="ship.feedback" class="mt-1 whitespace-pre-wrap">
             {{ ship.feedback }}
@@ -226,6 +238,10 @@ function personName(person: {
       .filter(Boolean)
       .join(" ") || person.id
   );
+}
+
+function formatHours(seconds: number) {
+  return (seconds / 3600).toFixed(1);
 }
 
 const ownerName = computed(

@@ -91,6 +91,14 @@
             {{ shipStatus[latestShip.status].description }}
           </p>
           <p
+            v-if="latestShip.pixelsAwarded !== null"
+            class="mt-1 text-sm font-bold"
+          >
+            You got {{ latestShip.pixelsAwarded.toLocaleString() }} pixels and
+            {{ latestShip.bonusPointsAwarded?.toLocaleString() }} bonus points
+            for this ship!
+          </p>
+          <p
             v-if="latestShip.feedback"
             class="mt-2 whitespace-pre-wrap border-l-2 border-white/40 pl-3"
           >

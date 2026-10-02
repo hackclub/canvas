@@ -15,6 +15,7 @@ function badRequest(statusMessage: string) {
 // PATCH /api/admin/ships/:id — approves or rejects a pending ship, which unlocks the project.
 // With `override`, sets the project's latest ship to any status instead; setting it back to
 // pending puts it back in the review queue and locks the project again.
+// The first time a ship is approved, its owner gets paid for its hours (see payShip).
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const id = Number(getRouterParam(event, 'id'))
@@ -45,18 +46,62 @@ export default defineEventHandler(async (event) => {
   }
 
   const reviewed = body.status !== 'pending'
-  const [updated] = Number.isSafeInteger(id)
-    ? await useDB()
-        .update(schema.ships)
-        .set({
-          status: body.status,
-          feedback,
-          reviewerId: reviewed ? me.id : null,
-          reviewedAt: reviewed ? new Date() : null,
-        })
-        .where(and(...where))
-        .returning()
-    : []
+
+  // Ships from before Hackatime time was saved when shipping get paid for the time now.
+  // Looked up before the transaction, so it isn't held open waiting on Hackatime.
+  let fallbackSeconds: number | null = null
+  if (body.status === 'approved' && Number.isSafeInteger(id)) {
+    const [ship] = await useDB()
+      .select({
+        hackatimeSeconds: schema.ships.hackatimeSeconds,
+        pixelsAwarded: schema.ships.pixelsAwarded,
+        ownerId: schema.projects.userId,
+        hackatimeProjects: schema.projects.hackatimeProjects,
+      })
+      .from(schema.ships)
+      .innerJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
+      .where(eq(schema.ships.id, id))
+    if (ship && ship.hackatimeSeconds === null && ship.pixelsAwarded === null) {
+      fallbackSeconds = await getProjectHackatimeSeconds(ship.ownerId, ship.hackatimeProjects) ?? 0
+    }
+  }
+
+  const updated = Number.isSafeInteger(id)
+    ? await useDB().transaction(async (tx) => {
+        // Locked so the audit log gets the status it was changed from
+        const [before] = await tx
+          .select({ status: schema.ships.status, ownerId: schema.projects.userId })
+          .from(schema.ships)
+          .innerJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
+          .where(eq(schema.ships.id, id))
+          .for('update', { of: schema.ships })
+        const [updated] = await tx
+          .update(schema.ships)
+          .set({
+            status: body.status!,
+            feedback,
+            reviewerId: reviewed ? me.id : null,
+            reviewedAt: reviewed ? new Date() : null,
+          })
+          .where(and(...where))
+          .returning()
+        if (updated && before && updated.status === 'approved' && updated.pixelsAwarded === null) {
+          const paid = await payShip(tx, updated, before.ownerId, updated.hackatimeSeconds ?? fallbackSeconds ?? 0)
+          Object.assign(updated, { pixelsAwarded: paid.pixels, bonusPointsAwarded: paid.bonusPoints })
+        }
+        if (updated && before) {
+          await logAdminAction(
+            tx,
+            me.id,
+            override
+              ? { action: 'ship.override', details: { shipId: id, from: before.status, to: updated.status, feedback } }
+              : { action: 'ship.review', details: { shipId: id, status: updated.status, feedback } },
+            { userId: before.ownerId, projectId: updated.projectId },
+          )
+        }
+        return updated
+      })
+    : undefined
 
   if (!updated) {
     const exists = Number.isSafeInteger(id) && await useDB().query.ships.findFirst({

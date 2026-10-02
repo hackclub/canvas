@@ -37,3 +37,14 @@ export async function getHackatimeProjects(userId: string): Promise<HackatimePro
     throw createError({ statusCode: 502, statusMessage: 'Could not reach Hackatime' })
   }
 }
+
+// Total time across a Canvas project's linked Hackatime projects, or null if the user
+// hasn't linked Hackatime
+export async function getProjectHackatimeSeconds(userId: string, hackatimeProjects: string[]) {
+  const projects = await getHackatimeProjects(userId)
+  if (!projects) return null
+  const linked = new Set(hackatimeProjects)
+  return projects
+    .filter((p) => linked.has(p.name))
+    .reduce((total, p) => total + p.total_seconds, 0)
+}

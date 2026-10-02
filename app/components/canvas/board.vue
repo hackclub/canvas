@@ -30,6 +30,50 @@
     </div>
 
     <div
+      v-if="inspected"
+      class="absolute top-3 right-3 w-64 max-w-[calc(100%-1.5rem)] border-4 border-black bg-white p-3 text-sm"
+    >
+      <div class="flex items-center justify-between gap-2">
+        <p class="font-bold tabular-nums">
+          ({{ inspected.x }}, {{ inspected.y }})
+        </p>
+        <button
+          type="button"
+          aria-label="close"
+          class="flex cursor-pointer items-center"
+          @click="inspected = null"
+        >
+          <Icon name="lucide:x" :size="18" />
+        </button>
+      </div>
+      <p v-if="inspected.loading" class="opacity-60">loading…</p>
+      <p v-else-if="inspected.error" class="opacity-60">{{ inspected.error }}</p>
+      <p v-else-if="!inspected.info" class="opacity-60">
+        nobody's drawn here yet
+      </p>
+      <template v-else>
+        <p>
+          last drawn by
+          <NuxtLink
+            v-if="inspected.info.slackId"
+            :to="slackProfileUrl(inspected.info.slackId)"
+            external
+            target="_blank"
+            class="font-bold"
+          >
+            {{ inspected.info.name ?? "a Hack Clubber" }}
+          </NuxtLink>
+          <span v-else class="font-bold">{{
+            inspected.info.name ?? "a Hack Clubber"
+          }}</span>
+        </p>
+        <p class="opacity-60">
+          {{ new Date(inspected.info.placedAt).toLocaleString() }}
+        </p>
+      </template>
+    </div>
+
+    <div
       class="absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2"
     >
       <p
@@ -120,7 +164,7 @@
         {{
           editing
             ? "click or drag to draw · right-click drag or hold space to move · ctrl+z to undo · enter to confirm"
-            : "drag to move · scroll to zoom · press draw (or 1–9) to start drawing"
+            : "drag to move · scroll to zoom · click a pixel to see who drew it · press draw (or 1–9) to start drawing"
         }}
       </p>
     </div>
@@ -149,6 +193,14 @@ const hover = ref<{ x: number; y: number } | null>(null);
 const outOfPixels = ref(false);
 const panning = ref(false);
 const spaceHeld = ref(false);
+// The pixel clicked on outside of edit mode, and who last drew on it
+const inspected = ref<{
+  x: number;
+  y: number;
+  loading: boolean;
+  error?: string;
+  info?: { name: string | null; slackId: string | null; placedAt: string } | null;
+} | null>(null);
 
 // The board is drawn at 1 pixel per pixel onto an offscreen canvas, which gets scaled
 // onto the visible one along with the hover preview. Drawing both with the same
@@ -490,9 +542,47 @@ function render() {
     c.strokeStyle = "black";
     c.strokeRect(x - line / 2, y - line / 2, 1 + line, 1 + line);
   }
+
+  if (inspected.value && !editing.value) {
+    const { x, y } = inspected.value;
+    // 2 screen pixels wide, so it shows up on black pixels too
+    const line = 2 / view.scale;
+    c.lineWidth = line;
+    c.strokeStyle = "white";
+    c.strokeRect(x - line / 2, y - line / 2, 1 + line, 1 + line);
+    c.lineWidth = line / 2;
+    c.strokeStyle = "black";
+    c.strokeRect(x - line / 4, y - line / 4, 1 + line / 2, 1 + line / 2);
+  }
 }
 
-watch([hover, editing, tool, loaded], scheduleRender);
+watch([hover, editing, tool, loaded, inspected], scheduleRender);
+
+// --- seeing who drew a pixel ---
+// Counts lookups, so a slow response can't replace a newer one
+let inspectRequest = 0;
+
+async function inspect({ x, y }: Point) {
+  if (!onBoard({ x, y })) {
+    inspected.value = null;
+    return;
+  }
+  const request = ++inspectRequest;
+  inspected.value = { x, y, loading: true };
+  try {
+    const info = await $fetch("/api/canvas/pixel", { query: { x, y } });
+    if (request === inspectRequest) inspected.value = { x, y, loading: false, info };
+  } catch {
+    if (request === inspectRequest) {
+      inspected.value = { x, y, loading: false, error: "couldn't look that up" };
+    }
+  }
+}
+
+// Drawing hides the outline, so the card goes away too
+watch(editing, (value) => {
+  if (value) inspected.value = null;
+});
 
 // --- panning and zooming ---
 const view = { x: 0, y: 0, scale: 1 };
@@ -563,6 +653,7 @@ let lastPoint: Point = { x: 0, y: 0 };
 let lastPixel: Point = { x: 0, y: 0 };
 let tapStart: Point = { x: 0, y: 0 };
 let lastPinch = { x: 0, y: 0, distance: 1 };
+let clickToInspect = false;
 
 function pinchInfo() {
   const [a, b] = [...pointers.values()] as [Point, Point];
@@ -598,7 +689,9 @@ function onPointerDown(e: PointerEvent) {
   } else {
     mode = "pan";
     panning.value = true;
-    lastPoint = p;
+    tapStart = lastPoint = p;
+    // Lifting a left click without moving looks up the pixel instead of panning
+    clickToInspect = e.button === 0 && !editing.value && !spaceHeld.value;
   }
 }
 
@@ -638,10 +731,21 @@ function onPointerMove(e: PointerEvent) {
 
 function onPointerUp(e: PointerEvent) {
   if (!pointers.has(e.pointerId)) return;
-  if (mode === "tap" && e.type === "pointerup") {
-    const pixel = boardPoint(localPoint(e));
-    paint(pixel.x, pixel.y);
+  if (e.type === "pointerup") {
+    const p = localPoint(e);
+    const pixel = boardPoint(p);
+    if (mode === "tap") {
+      if (editing.value) paint(pixel.x, pixel.y);
+      else inspect(pixel);
+    } else if (
+      mode === "pan" &&
+      clickToInspect &&
+      Math.hypot(p.x - tapStart.x, p.y - tapStart.y) <= 4
+    ) {
+      inspect(pixel);
+    }
   }
+  clickToInspect = false;
   pointers.delete(e.pointerId);
 
   if (mode === "pinch" && pointers.size === 1) {
@@ -694,6 +798,8 @@ function onKeyDown(e: KeyboardEvent) {
   } else if (e.key === "Escape" && editing.value) {
     // Leaving with a draft goes through discard, so it asks first
     discard();
+  } else if (e.key === "Escape") {
+    inspected.value = null;
   } else if (key === "e") {
     editing.value = true;
     tool.value = "eraser";

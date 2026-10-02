@@ -1,7 +1,8 @@
 import { desc, eq, max } from 'drizzle-orm'
 
 // GET /api/ships/recent — the 10 most recently approved projects, for everyone signed in
-// to see. Owners are only identified by publicName(), so don't add other user columns here.
+// to see. Owners are only identified by publicName() and their Slack ID (for linking to their
+// Slack profile), so don't add other user columns here.
 export default defineEventHandler(async (event) => {
   await requireUserSession(event)
   const shippedAt = max(schema.ships.reviewedAt)
@@ -14,6 +15,7 @@ export default defineEventHandler(async (event) => {
       demoUrl: schema.projects.demoUrl,
       repoUrl: schema.projects.repoUrl,
       ownerName: publicName(),
+      ownerSlackId: schema.users.slackId,
       shippedAt,
     })
     .from(schema.ships)

@@ -40,7 +40,16 @@
         <div class="flex flex-col flex-1 p-4 border-t-4 border-black">
           <h3 class="font-bold text-lg line-clamp-1">{{ ship.name }}</h3>
           <p class="text-sm opacity-60 line-clamp-1">
-            by {{ ship.ownerName ?? "a Hack Clubber" }}
+            by
+            <NuxtLink
+              v-if="ship.ownerSlackId"
+              :to="slackProfileUrl(ship.ownerSlackId)"
+              external
+              target="_blank"
+            >
+              {{ ship.ownerName ?? "a Hack Clubber" }}
+            </NuxtLink>
+            <template v-else>{{ ship.ownerName ?? "a Hack Clubber" }}</template>
           </p>
           <p class="mt-1 mb-4 opacity-70 line-clamp-3">
             {{ ship.description }}

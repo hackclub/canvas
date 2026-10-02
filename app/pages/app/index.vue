@@ -86,13 +86,14 @@ const cards = [
 const { user } = useUserSession();
 const { data: projects } = await useFetch("/api/projects");
 const { data: hackatime } = await useFetch("/api/hackatime");
+const { data: progress } = await useFetch("/api/me/progress");
 
-// Drawing and shipping have no API to check yet, so they always show as not done
+// The shop has no API to check yet, so it always shows as not done
 const todos = computed(() => [
   { label: "link hackatime", done: !!hackatime.value?.linked },
   { label: "create your first project", done: !!projects.value?.length },
-  { label: "draw on the canvas", done: false },
-  { label: "ship your first project", done: false },
+  { label: "draw on the canvas", done: !!progress.value?.drawn },
+  { label: "ship your first project", done: !!progress.value?.shipped },
   { label: "get some loot from the shop", done: false },
 ]);
 </script>

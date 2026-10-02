@@ -9,16 +9,25 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: `Before shipping: ${blockers.join(', ').toLowerCase()}` })
   }
 
+  // Saved with the ship, so it's paid for the time it was shipped with, not time logged
+  // while it waits in the queue
+  const hackatimeSeconds = await getProjectHackatimeSeconds(user.id, project.hackatimeProjects)
+  if (hackatimeSeconds === null) {
+    throw createError({ statusCode: 400, statusMessage: 'Link Hackatime before shipping' })
+  }
+
   // The partial unique index allows only one pending ship per project,
   // so nothing is returned if one's already in review
   const [ship] = await useDB()
     .insert(schema.ships)
-    .values({ projectId: project.id })
+    .values({ projectId: project.id, hackatimeSeconds })
     .onConflictDoNothing()
     .returning({
       id: schema.ships.id,
       status: schema.ships.status,
       feedback: schema.ships.feedback,
+      pixelsAwarded: schema.ships.pixelsAwarded,
+      bonusPointsAwarded: schema.ships.bonusPointsAwarded,
       createdAt: schema.ships.createdAt,
       reviewedAt: schema.ships.reviewedAt,
     })

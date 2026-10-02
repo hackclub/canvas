@@ -50,5 +50,17 @@ const sections = [
     icon: "lucide:rocket",
     description: "Shipped projects waiting to be approved or rejected",
   },
+  {
+    to: "/app/admin/shop",
+    label: "shop",
+    icon: "lucide:shopping-bag",
+    description: "What people can buy with their bonus points",
+  },
+  {
+    to: "/app/admin/audit",
+    label: "audit log",
+    icon: "lucide:scroll-text",
+    description: "Pixel and bonus point transactions, and admin actions",
+  },
 ];
 </script>
