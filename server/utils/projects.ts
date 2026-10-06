@@ -1,8 +1,13 @@
 import type { H3Event } from 'h3'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, isNotNull } from 'drizzle-orm'
+
+type DB = ReturnType<typeof useDB>
+type Tx = Parameters<Parameters<DB['transaction']>[0]>[0]
 
 const MAX_NAME_LENGTH = 100
 const MAX_TEXT_LENGTH = 5000
+const MAX_HACKATIME_PROJECTS = 100
+const MAX_HACKATIME_NAME_LENGTH = 255
 
 function badRequest(statusMessage: string) {
   return createError({ statusCode: 400, statusMessage })
@@ -31,6 +36,18 @@ export async function requireNotShipping(projectId: number) {
   if (pending) {
     throw createError({ statusCode: 409, statusMessage: "This project is being reviewed, so it can't be changed until the review is done" })
   }
+}
+
+// Whether any of the project's ships has been paid out. Its Hackatime time is accounted for
+// by the project's own ships (see payShip), so a paid project can't be deleted or have
+// Hackatime projects unlinked, or the same hours could be paid again by a new project.
+export async function hasPaidShip(db: DB | Tx, projectId: number) {
+  const [paid] = await db
+    .select({ id: schema.ships.id })
+    .from(schema.ships)
+    .where(and(eq(schema.ships.projectId, projectId), isNotNull(schema.ships.pixelsAwarded)))
+    .limit(1)
+  return !!paid
 }
 
 export function parseProjectName(value: unknown) {
@@ -67,8 +84,12 @@ export function parseProjectUrl(value: unknown, field: string) {
 }
 
 export function parseHackatimeProjectNames(value: unknown) {
-  if (!Array.isArray(value) || !value.every((name) => typeof name === 'string')) {
-    throw badRequest('Hackatime projects must be a list of project names')
+  if (
+    !Array.isArray(value)
+    || value.length > MAX_HACKATIME_PROJECTS
+    || !value.every((name) => typeof name === 'string' && name.length <= MAX_HACKATIME_NAME_LENGTH)
+  ) {
+    throw badRequest(`Hackatime projects must be a list of at most ${MAX_HACKATIME_PROJECTS} project names`)
   }
   return [...new Set(value as string[])]
 }

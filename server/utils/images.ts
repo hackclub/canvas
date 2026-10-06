@@ -13,7 +13,14 @@ function tooLarge() {
 // Reads the `banner` file field of a multipart upload and re-encodes it to WebP, which
 // strips metadata like EXIF location and means only images we generated are ever served.
 export async function readBannerUpload(event: H3Event) {
-  if (Number(getRequestHeader(event, 'content-length')) > MAX_UPLOAD_BYTES) {
+  // The whole body is buffered in memory, so the size has to be known up front. Without a
+  // Content-Length (chunked uploads) it could be any size, and the limit below wouldn't
+  // apply until it was all in memory.
+  const length = Number(getRequestHeader(event, 'content-length'))
+  if (!Number.isInteger(length) || length <= 0) {
+    throw createError({ statusCode: 411, statusMessage: 'Content-Length is required' })
+  }
+  if (length > MAX_UPLOAD_BYTES) {
     throw tooLarge()
   }
   const file = (await readMultipartFormData(event))?.find((part) => part.name === 'banner' && part.filename)

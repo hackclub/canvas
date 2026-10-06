@@ -26,7 +26,7 @@ export async function getHackatimeProjects(userId: string): Promise<HackatimePro
     const { projects } = await $fetch<{ projects: HackatimeProject[] }>(
       `${HACKATIME_URL}/api/v1/authenticated/projects`,
       {
-        headers: { Authorization: `Bearer ${row.hackatime.access_token}` },
+        headers: { Authorization: `Bearer ${decryptToken(row.hackatime.access_token)}` },
         // Archived projects still count, so hours don't drop if the user archives one
         query: { include_archived: true },
       },

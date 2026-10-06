@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   if ('hackatimeProjects' in body) {
     const names = parseHackatimeProjectNames(body.hackatimeProjects)
     if (names.length) {
-      // Only allow the user's own Hackatime projects...
+      // Only allow the user's own Hackatime projects
       const hackatimeProjects = await getHackatimeProjects(user.id)
       if (!hackatimeProjects) {
         throw createError({ statusCode: 400, statusMessage: 'Link Hackatime before adding Hackatime projects' })
@@ -35,9 +35,23 @@ export default defineEventHandler(async (event) => {
       if (unknown) {
         throw createError({ statusCode: 400, statusMessage: `"${unknown}" isn't one of your Hackatime projects` })
       }
+    }
+    update.hackatimeProjects = names
+  }
 
-      // ...that aren't already counted towards another project
-      const conflict = await useDB().query.projects.findFirst({
+  return useDB().transaction(async (tx) => {
+    if (update.hackatimeProjects) {
+      const names = update.hackatimeProjects
+      // Locks the user, so two requests at once can't both pass the checks below and link
+      // the same Hackatime project to two projects
+      await tx
+        .select({ id: schema.users.id })
+        .from(schema.users)
+        .where(eq(schema.users.id, user.id))
+        .for('update')
+
+      // Hackatime projects can't be counted towards more than one project...
+      const conflict = await tx.query.projects.findFirst({
         where: and(
           eq(schema.projects.userId, user.id),
           ne(schema.projects.id, project.id),
@@ -49,14 +63,27 @@ export default defineEventHandler(async (event) => {
         const taken = names.find((name) => conflict.hackatimeProjects.includes(name))
         throw createError({ statusCode: 409, statusMessage: `"${taken}" is already linked to ${conflict.name}` })
       }
-    }
-    update.hackatimeProjects = names
-  }
 
-  const [updated] = await useDB()
-    .update(schema.projects)
-    .set({ ...update, updatedAt: new Date() })
-    .where(eq(schema.projects.id, project.id))
-    .returning()
-  return updated
+      // ...and once a project has been paid for their time, they stay linked to it. Otherwise
+      // they could be moved to a new project and paid for again.
+      const current = await tx.query.projects.findFirst({
+        where: eq(schema.projects.id, project.id),
+        columns: { hackatimeProjects: true },
+      })
+      const removing = (current?.hackatimeProjects ?? []).some((name) => !names.includes(name))
+      if (removing && await hasPaidShip(tx, project.id)) {
+        throw createError({
+          statusCode: 409,
+          statusMessage: "This project has been paid out for its Hackatime time, so those projects can't be unlinked",
+        })
+      }
+    }
+
+    const [updated] = await tx
+      .update(schema.projects)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(schema.projects.id, project.id))
+      .returning()
+    return updated
+  })
 })

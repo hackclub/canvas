@@ -17,6 +17,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Server-only; can also be overridden at runtime with NUXT_DATABASE_URL
     databaseUrl: process.env.DATABASE_URL,
+    // Encrypts the OAuth tokens stored in the database; overridable with NUXT_TOKEN_KEY
+    tokenKey: process.env.TOKEN_ENCRYPTION_KEY ?? '',
+    // Public origin of the site (e.g. https://canvas.hackclub.com), used for links handed to
+    // other services; overridable with NUXT_SITE_URL
+    siteUrl: process.env.SITE_URL ?? '',
     // Hack Club Auth OAuth app; overridable with NUXT_HCA_CLIENT_ID / NUXT_HCA_CLIENT_SECRET
     hca: {
       clientId: process.env.HCA_CLIENT_ID ?? '',

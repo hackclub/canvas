@@ -109,9 +109,9 @@ export async function syncShipToAirtable(shipId: number, siteUrl: string) {
   const previousSeconds = previous?.seconds ?? 0
   const shipSeconds = ship.hackatimeSeconds ?? 0
 
-  const hackatimeToken = user.hackatime?.access_token
+  const hackatimeToken = user.hackatime ? decryptToken(user.hackatime.access_token) : undefined
   const [identity, githubUsername, hackatimeProjects] = await Promise.all([
-    fetchHcaIdentity(user.hca.access_token),
+    fetchHcaIdentity(decryptToken(user.hca.access_token)),
     hackatimeToken ? fetchGithubUsername(hackatimeToken) : null,
     hackatimeToken ? fetchHackatimeProjectDetails(hackatimeToken, project.hackatimeProjects) : [],
   ])

@@ -1,10 +1,11 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, isNotNull, ne } from 'drizzle-orm'
 
 // GET /auth/hackatime — links a Hackatime account (https://hackatime.hackclub.com/docs/oauth/oauth-apps)
 // Not a sign-in method: the user must already be signed in with Hack Club Auth.
 // Without a `code` it redirects to Hackatime; Hackatime then redirects back here with one.
 const HACKATIME_URL = 'https://hackatime.hackclub.com'
-const SCOPES = 'profile read admin'
+// Canvas only reads profile and project data, so it doesn't ask for `admin`
+const SCOPES = 'profile read'
 const STATE_COOKIE = 'hackatime_oauth_state'
 const RETURN_COOKIE = 'hackatime_oauth_return'
 const SETUP_PAGE = '/app/setup/hackatime'
@@ -19,6 +20,19 @@ interface TokenResponse {
 
 interface MeResponse {
   id: number
+}
+
+function alreadyLinked() {
+  return createError({
+    statusCode: 409,
+    statusMessage: 'That Hackatime account is already linked to another Canvas account',
+  })
+}
+
+// Postgres unique_violation, which Drizzle wraps in an error with the driver's error as `cause`
+function isUniqueViolation(error: unknown) {
+  const { code, cause } = error as { code?: string, cause?: { code?: string } }
+  return (cause?.code ?? code) === '23505'
 }
 
 export default defineEventHandler(async (event) => {
@@ -84,16 +98,53 @@ export default defineEventHandler(async (event) => {
     headers: { Authorization: `Bearer ${token.access_token}` },
   })
 
+  const db = useDB()
+
+  // A Hackatime account can only be linked to one Canvas account, or several accounts
+  // could each be paid for the same hours
+  const taken = await db.query.users.findFirst({
+    where: and(eq(schema.users.hackatimeId, me.id), ne(schema.users.id, user.id)),
+    columns: { id: true },
+  })
+  if (taken) throw alreadyLinked()
+
+  // Once hours have been paid out, switching to a different Hackatime account would let
+  // them be paid again, so the account can't be changed after that
+  const current = await db.query.users.findFirst({
+    where: eq(schema.users.id, user.id),
+    columns: { hackatimeId: true },
+  })
+  if (current?.hackatimeId && current.hackatimeId !== me.id) {
+    const [paid] = await db
+      .select({ id: schema.ships.id })
+      .from(schema.ships)
+      .innerJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
+      .where(and(eq(schema.projects.userId, user.id), isNotNull(schema.ships.pixelsAwarded)))
+      .limit(1)
+    if (paid) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "You've already been paid for time from another Hackatime account, so it can't be changed",
+      })
+    }
+  }
+
   // Tokens are long-lived (~16 years) and have no refresh flow, so storing it once is enough
-  await useDB()
-    .update(schema.users)
-    .set({
-      hackatime: {
-        access_token: token.access_token,
-        created_at: new Date(token.created_at * 1000).toISOString(),
-      },
-      hackatimeId: me.id,
-    })
-    .where(eq(schema.users.id, user.id))
+  try {
+    await db
+      .update(schema.users)
+      .set({
+        hackatime: {
+          access_token: encryptToken(token.access_token),
+          created_at: new Date(token.created_at * 1000).toISOString(),
+        },
+        hackatimeId: me.id,
+      })
+      .where(eq(schema.users.id, user.id))
+  } catch (error) {
+    // Lost a race with another account linking the same Hackatime account
+    if (isUniqueViolation(error)) throw alreadyLinked()
+    throw error
+  }
   return sendRedirect(event, returnPage)
 })

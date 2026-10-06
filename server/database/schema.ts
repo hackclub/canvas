@@ -14,6 +14,7 @@ export interface UserIdentity {
 // Hack Club Auth token from the user's last sign-in, for reading their address and birthday
 // when their ships are synced to Airtable. Kept out of `identity`, which admin lists return.
 export interface UserHca {
+  // Encrypted, see encryptToken (server/utils/tokens.ts)
   access_token: string
   // When it was issued (ISO 8601). Tokens last 6 months.
   created_at: string
@@ -21,6 +22,7 @@ export interface UserHca {
 
 // Linked Hackatime account, set by /auth/hackatime
 export interface UserHackatime {
+  // Encrypted, see encryptToken (server/utils/tokens.ts)
   access_token: string
   // When Hackatime issued the token (ISO 8601)
   created_at: string
@@ -41,8 +43,9 @@ export const users = pgTable('users', {
   // Set by the user in account settings, shown instead of their Slack display name.
   // Use publicName() (server/utils/users.ts) rather than reading these two directly.
   displayNameOverride: text('display_name_override'),
-  // Hackatime user ID, set by /auth/hackatime
-  hackatimeId: integer('hackatime_id'),
+  // Hackatime user ID, set by /auth/hackatime. Unique so one Hackatime account can't be
+  // linked to several Canvas accounts and paid for the same hours more than once.
+  hackatimeId: integer('hackatime_id').unique(),
   // Pixels currency balance, spent on the canvas
   pixels: integer('pixels').notNull().default(0),
   // Bonus points currency balance, spent in the shop

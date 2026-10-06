@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
   // Refreshed on every sign-in too. If Slack can't be reached (undefined), the cached
   // name is left as it is rather than wiped.
   const slackDisplayName = slackId ? await fetchSlackDisplayName(slackId) : null
-  const hcaToken = { access_token: token.access_token, created_at: new Date().toISOString() }
+  const hcaToken = { access_token: encryptToken(token.access_token), created_at: new Date().toISOString() }
   const [dbUser] = await useDB()
     .insert(schema.users)
     .values({ id: identity.id, identity: userIdentity, hca: hcaToken, slackId, slackDisplayName })
@@ -89,6 +89,15 @@ export default defineEventHandler(async (event) => {
     })
     .returning({ isAdmin: schema.users.isAdmin })
 
-  await setUserSession(event, { user: { ...identity, isAdmin: dbUser!.isAdmin } })
+  // Only what the UI needs. The session cookie is also sent to the browser, so it
+  // shouldn't hold the rest of the identity (email, address, birthday).
+  await setUserSession(event, {
+    user: {
+      id: identity.id,
+      first_name: identity.first_name,
+      last_name: identity.last_name,
+      isAdmin: dbUser!.isAdmin,
+    },
+  })
   return sendRedirect(event, '/app')
 })

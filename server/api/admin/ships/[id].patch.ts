@@ -123,7 +123,8 @@ export default defineEventHandler(async (event) => {
   // Once the approval is committed. In the background, so a slow or failing Airtable doesn't
   // hold up or fail the review.
   if (paid) {
-    const siteUrl = getRequestURL(event, { xForwardedHost: true, xForwardedProto: true }).origin
+    // From config rather than request headers, which the sender can set (X-Forwarded-Host)
+    const siteUrl = useRuntimeConfig(event).siteUrl || getRequestURL(event).origin
     syncShipToAirtable(id, siteUrl).catch((error) => {
       console.error(`Failed to sync ship ${id} to Airtable:`, error)
     })

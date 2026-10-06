@@ -26,8 +26,8 @@ import { sql } from 'drizzle-orm'
 // Docs: https://orm.drizzle.team/docs/overview
 export default defineEventHandler(async () => {
   try {
-    const [row] = await useDB().execute<{ now: string }>(sql`select now() as now`)
-    return { database: 'up', time: row?.now }
+    await useDB().execute(sql`select 1`)
+    return { database: 'up' }
   } catch (error) {
     console.error('Database check failed:', error)
     throw createError({ statusCode: 503, statusMessage: 'Database unavailable' })

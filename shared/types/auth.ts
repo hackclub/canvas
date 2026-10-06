@@ -11,7 +11,8 @@ export interface AuthUser {
 }
 
 declare module '#auth-utils' {
-  interface User extends AuthUser {
+  // Only these fields are kept in the session (see server/routes/auth/hackclub.get.ts)
+  interface User extends Pick<AuthUser, 'id' | 'first_name' | 'last_name'> {
     // From the users table, set on sign-in. Only for showing/hiding UI,
     // server routes should check the database with requireAdmin instead.
     isAdmin: boolean
