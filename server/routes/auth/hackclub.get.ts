@@ -3,7 +3,8 @@ import { sql } from 'drizzle-orm'
 // GET /auth/hackclub — Hack Club Auth OAuth flow (https://auth.hackclub.com/docs/oauth-guide)
 // Without a `code` it redirects to Hack Club Auth; Hack Club Auth then redirects back here with one.
 const HCA_URL = 'https://auth.hackclub.com'
-const SCOPES = 'openid email name slack_id'
+// address and birthdate are for the Airtable sync (see server/utils/airtable.ts)
+const SCOPES = 'openid email name slack_id address birthdate'
 const STATE_COOKIE = 'hca_oauth_state'
 
 interface TokenResponse {
@@ -72,14 +73,16 @@ export default defineEventHandler(async (event) => {
   // Refreshed on every sign-in too. If Slack can't be reached (undefined), the cached
   // name is left as it is rather than wiped.
   const slackDisplayName = slackId ? await fetchSlackDisplayName(slackId) : null
+  const hcaToken = { access_token: token.access_token, created_at: new Date().toISOString() }
   const [dbUser] = await useDB()
     .insert(schema.users)
-    .values({ id: identity.id, identity: userIdentity, slackId, slackDisplayName })
+    .values({ id: identity.id, identity: userIdentity, hca: hcaToken, slackId, slackDisplayName })
     .onConflictDoUpdate({
       target: schema.users.id,
       set: {
         // Merge so fields added to `identity` later aren't wiped
         identity: sql`${schema.users.identity} || ${JSON.stringify(userIdentity)}::jsonb`,
+        hca: hcaToken,
         slackId,
         ...(slackDisplayName !== undefined && { slackDisplayName }),
       },

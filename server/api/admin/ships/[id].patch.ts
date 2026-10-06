@@ -15,7 +15,8 @@ function badRequest(statusMessage: string) {
 // PATCH /api/admin/ships/:id — approves or rejects a pending ship, which unlocks the project.
 // With `override`, sets the project's latest ship to any status instead; setting it back to
 // pending puts it back in the review queue and locks the project again.
-// The first time a ship is approved, its owner gets paid for its hours (see payShip).
+// The first time a ship is approved, its owner gets paid for its hours (see payShip) and it's
+// synced to Airtable (see syncShipToAirtable).
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const id = Number(getRouterParam(event, 'id'))
@@ -66,6 +67,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  let paid = false
   const updated = Number.isSafeInteger(id)
     ? await useDB().transaction(async (tx) => {
         // Locked so the audit log gets the status it was changed from
@@ -86,8 +88,9 @@ export default defineEventHandler(async (event) => {
           .where(and(...where))
           .returning()
         if (updated && before && updated.status === 'approved' && updated.pixelsAwarded === null) {
-          const paid = await payShip(tx, updated, before.ownerId, updated.hackatimeSeconds ?? fallbackSeconds ?? 0)
-          Object.assign(updated, { pixelsAwarded: paid.pixels, bonusPointsAwarded: paid.bonusPoints })
+          const payout = await payShip(tx, updated, before.ownerId, updated.hackatimeSeconds ?? fallbackSeconds ?? 0)
+          Object.assign(updated, { pixelsAwarded: payout.pixels, bonusPointsAwarded: payout.bonusPoints })
+          paid = true
         }
         if (updated && before) {
           await logAdminAction(
@@ -114,6 +117,15 @@ export default defineEventHandler(async (event) => {
       statusMessage: override
         ? "Only a project's latest ship can be changed"
         : 'This ship has already been reviewed',
+    })
+  }
+
+  // Once the approval is committed. In the background, so a slow or failing Airtable doesn't
+  // hold up or fail the review.
+  if (paid) {
+    const siteUrl = getRequestURL(event, { xForwardedHost: true, xForwardedProto: true }).origin
+    syncShipToAirtable(id, siteUrl).catch((error) => {
+      console.error(`Failed to sync ship ${id} to Airtable:`, error)
     })
   }
   return updated

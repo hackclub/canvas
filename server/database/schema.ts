@@ -11,6 +11,14 @@ export interface UserIdentity {
   last_name?: string
 }
 
+// Hack Club Auth token from the user's last sign-in, for reading their address and birthday
+// when their ships are synced to Airtable. Kept out of `identity`, which admin lists return.
+export interface UserHca {
+  access_token: string
+  // When it was issued (ISO 8601). Tokens last 6 months.
+  created_at: string
+}
+
 // Linked Hackatime account, set by /auth/hackatime
 export interface UserHackatime {
   access_token: string
@@ -22,6 +30,8 @@ export const users = pgTable('users', {
   // Hack Club Auth identity ID, e.g. "ident!abc123"
   id: text('id').primaryKey(),
   identity: jsonb('identity').$type<UserIdentity>().notNull().default({}),
+  // Set by /auth/hackclub on every sign-in
+  hca: jsonb('hca').$type<UserHca>(),
   hackatime: jsonb('hackatime').$type<UserHackatime>(),
   // From Hack Club Auth on sign-in, null if they haven't linked Slack
   slackId: text('slack_id'),

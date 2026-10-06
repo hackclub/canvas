@@ -22,6 +22,13 @@ export default defineNuxtConfig({
       clientId: process.env.HCA_CLIENT_ID ?? '',
       clientSecret: process.env.HCA_CLIENT_SECRET ?? '',
     },
+    // YSWS Airtable that approved ships are synced to; overridable with NUXT_AIRTABLE_*
+    airtable: {
+      token: process.env.AIRTABLE_TOKEN ?? '',
+      baseId: process.env.AIRTABLE_BASE_ID ?? '',
+      // Table name or ID
+      table: process.env.AIRTABLE_TABLE ?? '',
+    },
     // Hackatime OAuth app; overridable with NUXT_HACKATIME_CLIENT_ID / NUXT_HACKATIME_CLIENT_SECRET
     hackatime: {
       clientId: process.env.HACKATIME_CLIENT_ID ?? '',

@@ -1,6 +1,6 @@
 import { desc, eq } from 'drizzle-orm'
 
-// GET /api/admin/users/:id — one user and their projects. Never returns the Hackatime token.
+// GET /api/admin/users/:id — one user and their projects. Never returns the Hackatime or Hack Club Auth tokens.
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   const id = getRouterParam(event, 'id')!
@@ -13,6 +13,6 @@ export default defineEventHandler(async (event) => {
     columns: { id: true, name: true, description: true, bannerKey: true },
     orderBy: desc(schema.projects.createdAt),
   })
-  const { hackatime, ...user } = row
+  const { hackatime, hca: _hca, ...user } = row
   return { ...user, hackatimeLinked: !!hackatime, projects }
 })
