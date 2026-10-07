@@ -55,11 +55,11 @@
     - after linking hackatime, they are immediately prompted to create a project
     - after that, they get 1 pixel as a reward and can now explore the website
 
-- [ ] track time-ly active users
+- [x] track time-ly active users
   - daily active users
   - hourly active users
   - total users
-  - [ ] admin graphs dashboard for this data
+  - [x] admin graphs dashboard for this data
     - date selector for admin graphs
     - graphs for daily active users over time (per day)
     - graphs for hourly active users over time (per hour)

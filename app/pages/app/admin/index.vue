@@ -57,6 +57,12 @@ const sections = [
     description: "What people can buy with their bonus points",
   },
   {
+    to: "/app/admin/activity",
+    label: "activity",
+    icon: "lucide:chart-column",
+    description: "Daily and hourly active users",
+  },
+  {
     to: "/app/admin/audit",
     label: "audit log",
     icon: "lucide:scroll-text",

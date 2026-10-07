@@ -4,13 +4,13 @@ type Tx = Parameters<Parameters<ReturnType<typeof useDB>['transaction']>[0]>[0]
 
 const BONUS_POINTS_PER_HOUR = 10
 // Pixels per hour for a project's first PIXEL_TIER_HOURS hours, then PIXELS_PER_HOUR_AFTER
-const PIXELS_PER_HOUR = 5
-const PIXEL_TIER_HOURS = 20
-const PIXELS_PER_HOUR_AFTER = 2.5
+const PIXELS_PER_HOUR = 10
+const PIXEL_TIER_HOURS = 10
+const PIXELS_PER_HOUR_AFTER = 5
 
 // What a project has earned in total for `seconds` of Hackatime time. Each ship pays the
 // difference between this at its time and at the last paid ship's, so a project's hours
-// are only ever paid once and the 20 hour tier counts across all of its ships.
+// are only ever paid once and the 10 hour tier counts across all of its ships.
 export function projectEarnings(seconds: number) {
   const hours = Math.max(0, seconds) / 3600
   return {

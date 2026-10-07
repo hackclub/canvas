@@ -182,3 +182,14 @@ export const adminActions = pgTable('admin_actions', {
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('admin_actions_created_at_idx').on(t.createdAt)])
+
+// One row per user per hour they made an authenticated request, for the admin activity graphs.
+// Daily active users are counted from these too, so there's no separate daily table.
+export const userActivity = pgTable('user_activity', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // Start of the hour (UTC)
+  hour: timestamp('hour', { withTimezone: true }).notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.hour] }),
+  index('user_activity_hour_idx').on(t.hour),
+])
