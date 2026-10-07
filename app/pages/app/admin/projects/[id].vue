@@ -46,12 +46,51 @@
             class="mt-1 block w-full border-3 border-black px-3 py-2 outline-none"
           />
         </label>
+        <label class="flex items-center gap-2 font-semibold">
+          <input v-model="cooking" type="checkbox" class="size-5 accent-black" />
+          cooking
+          <span class="font-normal opacity-70">(pays 1.2x the pixels for this ship)</span>
+        </label>
+        <div class="space-y-3 border-t-2 border-black pt-3">
+          <h3 class="font-bold">justification for the spot-checkers</h3>
+          <p class="text-sm opacity-70">
+            Sent to Airtable when you approve. Leave blank what doesn't apply.
+          </p>
+          <label class="block">
+            <span class="font-semibold">Override hours</span>
+            <span class="opacity-70">
+              (instead of {{ pendingShip.hackatimeSeconds !== null ? formatHours(pendingShip.hackatimeSeconds) : "Hackatime's" }} hours; this ship is paid for these hours, and they're sent to Airtable)
+            </span>
+            <input
+              v-model="justification.overrideHours"
+              type="number"
+              min="0"
+              max="1000"
+              step="0.01"
+              class="mt-1 block w-40 border-3 border-black px-3 py-2 outline-none"
+            />
+          </label>
+          <label
+            v-for="f in justificationFields"
+            :key="f.key"
+            class="block"
+          >
+            <span class="font-semibold">{{ f.label }}</span>
+            <span v-if="f.hint" class="opacity-70"> ({{ f.hint }})</span>
+            <textarea
+              v-model="justification[f.key]"
+              rows="2"
+              maxlength="5000"
+              class="mt-1 block w-full border-3 border-black px-3 py-2 outline-none"
+            />
+          </label>
+        </div>
         <p v-if="reviewError" class="text-red-600">{{ reviewError }}</p>
         <div class="flex gap-2">
           <UiButtonSmall
             icon="lucide:check"
             class="disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="reviewing"
+            :disabled="reviewing || (justification.overrideHours !== '' && !justification.overrideHoursJustification.trim())"
             @click="review('approved')"
           >
             approve
@@ -116,12 +155,15 @@
             </span>
           </p>
           <p v-if="ship.pixelsAwarded !== null" class="text-sm opacity-70">
-            paid {{ ship.pixelsAwarded.toLocaleString() }} pixels and
+            <b v-if="ship.cooking">cooking · </b>paid {{ ship.pixelsAwarded.toLocaleString() }} pixels and
             {{ ship.bonusPointsAwarded?.toLocaleString() }} bonus points<template
               v-if="ship.hackatimeSeconds !== null"
             >
               for {{ formatHours(ship.hackatimeSeconds) }} hours total</template
             >
+          </p>
+          <p v-if="ship.justification?.overrideHours != null" class="text-sm opacity-70">
+            hours overridden to {{ ship.justification.overrideHours }}: {{ ship.justification.overrideHoursJustification }}
           </p>
           <p v-if="ship.feedback" class="mt-1 whitespace-pre-wrap">
             {{ ship.feedback }}
@@ -256,6 +298,36 @@ const reviewedShips = computed(
 );
 
 const feedback = ref("");
+const cooking = ref(false);
+const justification = reactive({
+  overrideHours: "" as number | "",
+  overrideHoursJustification: "",
+  specialTechnicalFeatures: "",
+  deflationJustification: "",
+  additionalJustification: "",
+});
+const justificationFields = [
+  {
+    key: "overrideHoursJustification",
+    label: "Override hours justification",
+    hint: "required if you override the hours",
+  },
+  {
+    key: "specialTechnicalFeatures",
+    label: "Special technical features",
+    hint: "what justifies the hours spent",
+  },
+  {
+    key: "deflationJustification",
+    label: "Deflation justification",
+    hint: "why the hours were lowered, if they were",
+  },
+  {
+    key: "additionalJustification",
+    label: "Additional justification",
+    hint: "anything else for the spot-checker",
+  },
+] as const;
 const reviewing = ref(false);
 const reviewError = ref("");
 
@@ -265,9 +337,17 @@ async function review(status: "approved" | "rejected") {
   try {
     await $fetch(`/api/admin/ships/${pendingShip.value!.id}`, {
       method: "PATCH",
-      body: { status, feedback: feedback.value },
+      body: { status, feedback: feedback.value, cooking: cooking.value, justification },
     });
     feedback.value = "";
+    cooking.value = false;
+    Object.assign(justification, {
+      overrideHours: "",
+      overrideHoursJustification: "",
+      specialTechnicalFeatures: "",
+      deflationJustification: "",
+      additionalJustification: "",
+    });
     await refresh();
   } catch (e) {
     reviewError.value =

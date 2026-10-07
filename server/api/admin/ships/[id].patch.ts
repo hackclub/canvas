@@ -1,15 +1,46 @@
 import { and, eq, sql, type SQL } from 'drizzle-orm'
 import type { ShipStatus } from '../../../database/schema'
+import type { ShipJustification } from '../../../../shared/types/ships'
 
 interface Body {
   status?: ShipStatus
   feedback?: string
   // Changes the status of an already reviewed ship, e.g. to undo a mistaken review
   override?: boolean
+  // Pays this ship's pixels 1.2x, applied when it's first approved
+  cooking?: boolean
+  // For the Airtable spot-checkers, saved with the review
+  justification?: Partial<Record<keyof ShipJustification, unknown>>
 }
 
 function badRequest(statusMessage: string) {
   return createError({ statusCode: 400, statusMessage })
+}
+
+// Undefined if the request doesn't include one, so changing a ship's status doesn't wipe it
+function parseJustification(value: Body['justification']): ShipJustification | undefined {
+  if (value === undefined) return undefined
+  if (value === null || typeof value !== 'object') throw badRequest('Invalid justification')
+
+  let overrideHours: number | null = null
+  if (value.overrideHours !== null && value.overrideHours !== undefined && value.overrideHours !== '') {
+    overrideHours = Number(value.overrideHours)
+    if (!Number.isFinite(overrideHours) || overrideHours < 0 || overrideHours > 1000) {
+      throw badRequest('Override hours must be a number between 0 and 1000')
+    }
+    overrideHours = Math.round(overrideHours * 100) / 100
+  }
+  const justification: ShipJustification = {
+    overrideHours,
+    overrideHoursJustification: parseProjectText(value.overrideHoursJustification ?? '', 'Override hours justification'),
+    specialTechnicalFeatures: parseProjectText(value.specialTechnicalFeatures ?? '', 'Special technical features'),
+    deflationJustification: parseProjectText(value.deflationJustification ?? '', 'Deflation justification'),
+    additionalJustification: parseProjectText(value.additionalJustification ?? '', 'Additional justification'),
+  }
+  if (overrideHours !== null && !justification.overrideHoursJustification) {
+    throw badRequest('Say why the hours were overridden')
+  }
+  return justification
 }
 
 // PATCH /api/admin/ships/:id — approves or rejects a pending ship, which unlocks the project.
@@ -45,6 +76,8 @@ export default defineEventHandler(async (event) => {
     // Only pending ships can be reviewed, so two admins can't review the same ship
     where.push(eq(schema.ships.status, 'pending'))
   }
+
+  const justification = parseJustification(body.justification)
 
   const reviewed = body.status !== 'pending'
 
@@ -82,6 +115,8 @@ export default defineEventHandler(async (event) => {
           .set({
             status: body.status!,
             feedback,
+            ...(typeof body.cooking === 'boolean' ? { cooking: body.cooking } : {}),
+            ...(justification ? { justification } : {}),
             reviewerId: reviewed ? me.id : null,
             reviewedAt: reviewed ? new Date() : null,
           })

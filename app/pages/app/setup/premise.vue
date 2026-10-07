@@ -29,7 +29,7 @@
         <Icon name="lucide:repeat" :size="24" />
         <h2 class="text-xl font-bold">Repeat</h2>
       </div>
-      <p>Get bonuses and streaks for extra pixels!</p>
+      <p>Keep building and get physical prizes</p>
     </div>
   </div>
 </template>

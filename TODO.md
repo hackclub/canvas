@@ -33,9 +33,9 @@
   - [ ] shop fulfillment dashboard for admins
   - [ ] allow ordering items to addresses from HCA i guess
 
-- [ ] earn pixels for each hour coded
-  - [ ] progress bar on app home page
-  - [ ] streaks?
+- [x] earn pixels for each hour coded
+  - [x] progress bar on app home page
+  - [x] streaks?
 
 - [ ] finalize introduction setup thing
   - [ ] admin funnel graph for

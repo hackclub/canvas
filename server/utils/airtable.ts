@@ -138,8 +138,18 @@ export async function syncShipToAirtable(shipId: number, siteUrl: string) {
     'Canvas - Project ID': project.id.toString(),
     'Canvas - User ID': user.id,
   }
-  // A reship only counts the time since the project's last approved ship
-  if (previousSeconds > 0) {
+  const justification = ship.justification
+  if (justification) {
+    fields['Justification - Special Technical Features'] = justification.specialTechnicalFeatures
+    fields['Justification - Deflation Justification'] = justification.deflationJustification
+    fields['Justification - Additional Justification'] = justification.additionalJustification
+  }
+  if (justification?.overrideHours != null) {
+    // The reviewer's hours win over the automatic reship calculation
+    fields['Optional - Override Hours Spent'] = justification.overrideHours
+    fields['Optional - Override Hours Spent Justification'] = justification.overrideHoursJustification
+  } else if (previousSeconds > 0) {
+    // A reship only counts the time since the project's last approved ship
     fields['Optional - Override Hours Spent'] = hours(Math.max(0, shipSeconds - previousSeconds))
     fields['Optional - Override Hours Spent Justification']
       = `Reship: ${hours(shipSeconds)}h total on Hackatime, minus ${hours(previousSeconds)}h already submitted in earlier ships`

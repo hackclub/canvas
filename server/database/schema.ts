@@ -3,7 +3,8 @@
 import { sql } from 'drizzle-orm'
 import { boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import type { AdminAction } from '../../shared/types/audit'
-import type { ShipStatus } from '../../shared/types/ships'
+import type { AuthUser } from '../../shared/types/auth'
+import type { ShipJustification, ShipStatus } from '../../shared/types/ships'
 
 // Profile from Hack Club Auth, refreshed on every sign-in
 export interface UserIdentity {
@@ -46,6 +47,18 @@ export const users = pgTable('users', {
   // Hackatime user ID, set by /auth/hackatime. Unique so one Hackatime account can't be
   // linked to several Canvas accounts and paid for the same hours more than once.
   hackatimeId: integer('hackatime_id').unique(),
+  // From Hack Club Auth (the verification_status scope), refreshed on sign-in and by
+  // /api/me/eligibility. Null until known, e.g. for users from before this was saved.
+  verificationStatus: text('verification_status').$type<NonNullable<AuthUser['verification_status']>>(),
+  yswsEligible: boolean('ysws_eligible'),
+  // When they got the pixel for creating their first project in setup. Kept even if the
+  // project is deleted, so deleting and recreating can't earn it again.
+  setupRewardedAt: timestamp('setup_rewarded_at', { withTimezone: true }),
+  // Total Hackatime seconds when pay-as-you-code started, so time from before Canvas isn't
+  // paid. Null until the first sync after linking. See syncCodingPixels (server/utils/coding.ts).
+  codingBaselineSeconds: integer('coding_baseline_seconds'),
+  // Whole hours since the baseline that have already been paid for
+  codingHoursPaid: integer('coding_hours_paid').notNull().default(0),
   // Pixels currency balance, spent on the canvas
   pixels: integer('pixels').notNull().default(0),
   // Bonus points currency balance, spent in the shop
@@ -90,6 +103,10 @@ export const ships = pgTable('ships', {
   // Paid out the first time the ship is approved (see server/utils/payouts.ts), null until then.
   // Changing the status afterwards doesn't take them back or pay them again.
   pixelsAwarded: integer('pixels_awarded'),
+  // Set by the reviewer: pixels for this ship are multiplied (COOKING_MULTIPLIER in server/utils/payouts.ts)
+  cooking: boolean('cooking').notNull().default(false),
+  // Written by the reviewer when they review it, sent to Airtable when it's approved
+  justification: jsonb('justification').$type<ShipJustification>(),
   bonusPointsAwarded: integer('bonus_points_awarded'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
@@ -113,7 +130,7 @@ export const canvasPixels = pgTable('canvas_pixels', {
 }, (t) => [primaryKey({ columns: [t.x, t.y] })])
 
 // Why a user's pixel balance changed
-export type PixelTransactionReason = 'canvas' | 'admin' | 'ship'
+export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup'
 
 // Every change to a user's pixel balance, for the admin audit log
 export const pixelTransactions = pgTable('pixel_transactions', {

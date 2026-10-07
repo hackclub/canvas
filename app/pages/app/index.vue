@@ -26,6 +26,24 @@
         </NuxtLink>
       </div>
 
+      <div v-if="coding" class="border-4 border-black p-5">
+        <h2 class="font-bold text-xl">hours coded</h2>
+        <p class="mt-1 opacity-70">
+          Earn {{ coding.pixelsPerHour }} pixels for every hour you code,
+          {{ coding.hoursPaid }} hour{{ coding.hoursPaid === 1 ? "" : "s" }} paid so far.
+        </p>
+        <div class="mt-3 h-4 border-4 border-black">
+          <div
+            class="h-full bg-black"
+            :style="{ width: `${(coding.secondsIntoHour / 3600) * 100}%` }"
+          />
+        </div>
+        <p class="mt-1 text-sm opacity-70">
+          {{ Math.floor(coding.secondsIntoHour / 60) }} / 60 minutes until your next
+          {{ coding.pixelsPerHour }} pixels
+        </p>
+      </div>
+
       <ShipCarousel />
 
       <div>
@@ -87,6 +105,16 @@ const { user } = useUserSession();
 const { data: projects } = await useFetch("/api/projects");
 const { data: hackatime } = await useFetch("/api/hackatime");
 const { data: progress } = await useFetch("/api/me/progress");
+
+// Pays for any newly coded hours, so it runs in the browser and updates the balance
+const { refreshPixels } = usePixels();
+const { data: coding } = useFetch("/api/me/coding", {
+  method: "POST",
+  server: false,
+  onResponse: ({ response }) => {
+    if (response._data?.awarded) refreshPixels();
+  },
+});
 
 // The shop has no API to check yet, so it always shows as not done
 const todos = computed(() => [

@@ -1,10 +1,14 @@
 import { and, eq, isNotNull, max, ne, sql } from 'drizzle-orm'
 
+import type { ShipJustification } from '../../shared/types/ships'
+
 type Tx = Parameters<Parameters<ReturnType<typeof useDB>['transaction']>[0]>[0]
 
 const BONUS_POINTS_PER_HOUR = 10
 // Pixels per hour for a project's first PIXEL_TIER_HOURS hours, then PIXELS_PER_HOUR_AFTER
 const PIXELS_PER_HOUR = 10
+// Reviewers can mark a ship as "cooking" to pay it extra pixels
+export const COOKING_MULTIPLIER = 1.2
 const PIXEL_TIER_HOURS = 10
 const PIXELS_PER_HOUR_AFTER = 5
 
@@ -26,8 +30,8 @@ export function projectEarnings(seconds: number) {
 
 // Pays out an approved ship that hasn't been paid yet: pixels and bonus points for the
 // project's time since its last paid ship. `seconds` is the project's total time for this
-// ship. Run it in the same transaction that approved the ship. Returns what was paid.
-export async function payShip(tx: Tx, ship: { id: number, projectId: number }, ownerId: string, seconds: number) {
+// ship (or the reviewer's override hours are used instead). Run it in the same transaction that approved the ship. Returns what was paid.
+export async function payShip(tx: Tx, ship: { id: number, projectId: number, cooking: boolean, justification: ShipJustification | null }, ownerId: string, seconds: number) {
   // The time the project's earlier ships were paid for
   const [previous] = await tx
     .select({ seconds: max(schema.ships.hackatimeSeconds) })
@@ -38,9 +42,14 @@ export async function payShip(tx: Tx, ship: { id: number, projectId: number }, o
       isNotNull(schema.ships.pixelsAwarded),
     ))
   const before = projectEarnings(previous?.seconds ?? 0)
-  const now = projectEarnings(seconds)
+  // A reviewer's hour override replaces the hours this ship is paid for, on top of what
+  // earlier ships were paid for. The ship's recorded Hackatime time is left as it is.
+  const overrideHours = ship.justification?.overrideHours
+  const now = projectEarnings(overrideHours != null ? (previous?.seconds ?? 0) + overrideHours * 3600 : seconds)
   // Time can go down if a Hackatime project gets unlinked, which shouldn't take anything away
-  const pixels = Math.max(0, now.pixels - before.pixels)
+  const earned = Math.max(0, now.pixels - before.pixels)
+  // Only this ship's pixels are multiplied, not ones from earlier ships; rounded up like the rest
+  const pixels = ship.cooking ? Math.ceil(earned * COOKING_MULTIPLIER) : earned
   const bonusPoints = Math.max(0, now.bonusPoints - before.bonusPoints)
 
   await tx

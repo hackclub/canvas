@@ -30,6 +30,8 @@ export default defineEventHandler(async (event) => {
       status: schema.ships.status,
       feedback: schema.ships.feedback,
       hackatimeSeconds: schema.ships.hackatimeSeconds,
+      justification: schema.ships.justification,
+      cooking: schema.ships.cooking,
       pixelsAwarded: schema.ships.pixelsAwarded,
       bonusPointsAwarded: schema.ships.bonusPointsAwarded,
       createdAt: schema.ships.createdAt,

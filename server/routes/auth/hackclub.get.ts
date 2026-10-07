@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm'
 // Without a `code` it redirects to Hack Club Auth; Hack Club Auth then redirects back here with one.
 const HCA_URL = 'https://auth.hackclub.com'
 // address and birthdate are for the Airtable sync (see server/utils/airtable.ts)
-const SCOPES = 'openid email name slack_id address birthdate'
+const SCOPES = 'openid email name slack_id address birthdate verification_status'
 const STATE_COOKIE = 'hca_oauth_state'
 
 interface TokenResponse {
@@ -73,10 +73,14 @@ export default defineEventHandler(async (event) => {
   // Refreshed on every sign-in too. If Slack can't be reached (undefined), the cached
   // name is left as it is rather than wiped.
   const slackDisplayName = slackId ? await fetchSlackDisplayName(slackId) : null
+  // Left out if the scope wasn't granted, so what's already saved isn't wiped
+  const verification = identity.verification_status
+    ? { verificationStatus: identity.verification_status, yswsEligible: identity.ysws_eligible ?? false }
+    : {}
   const hcaToken = { access_token: encryptToken(token.access_token), created_at: new Date().toISOString() }
   const [dbUser] = await useDB()
     .insert(schema.users)
-    .values({ id: identity.id, identity: userIdentity, hca: hcaToken, slackId, slackDisplayName })
+    .values({ id: identity.id, identity: userIdentity, hca: hcaToken, slackId, slackDisplayName, ...verification })
     .onConflictDoUpdate({
       target: schema.users.id,
       set: {
@@ -84,10 +88,11 @@ export default defineEventHandler(async (event) => {
         identity: sql`${schema.users.identity} || ${JSON.stringify(userIdentity)}::jsonb`,
         hca: hcaToken,
         slackId,
+        ...verification,
         ...(slackDisplayName !== undefined && { slackDisplayName }),
       },
     })
-    .returning({ isAdmin: schema.users.isAdmin })
+    .returning({ isAdmin: schema.users.isAdmin, hackatime: schema.users.hackatime, setupRewardedAt: schema.users.setupRewardedAt })
 
   // Only what the UI needs. The session cookie is also sent to the browser, so it
   // shouldn't hold the rest of the identity (email, address, birthday).
@@ -99,5 +104,7 @@ export default defineEventHandler(async (event) => {
       isAdmin: dbUser!.isAdmin,
     },
   })
-  return sendRedirect(event, '/app')
+  // People who haven't been through setup yet start there
+  const needsSetup = !dbUser!.hackatime && !dbUser!.setupRewardedAt
+  return sendRedirect(event, needsSetup ? '/app/setup/introduction' : '/app')
 })

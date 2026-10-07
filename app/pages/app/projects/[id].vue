@@ -535,7 +535,18 @@ const shipError = ref("");
 const shipChecks = reactive({ demo: false, working: false });
 
 // Checked against what's saved, since that's what gets reviewed
+// Anyone not eligible yet is checked with Hack Club Auth again, in case that changed since
+// they signed in
+const { data: eligibility } = await useFetch("/api/me/eligibility");
+onMounted(async () => {
+  if (eligibility.value?.eligible === false) {
+    eligibility.value = await $fetch("/api/me/eligibility", {
+      query: { refresh: "1" },
+    });
+  }
+});
 const shipTodo = computed(() => [
+  ...(eligibility.value?.eligible === false ? ["Waiting on eligibility"] : []),
   ...(dirty.value ? ["Save your changes"] : []),
   ...shipBlockers(project.value!),
 ]);

@@ -112,16 +112,17 @@ export default defineEventHandler(async (event) => {
   // them be paid again, so the account can't be changed after that
   const current = await db.query.users.findFirst({
     where: eq(schema.users.id, user.id),
-    columns: { hackatimeId: true },
+    columns: { hackatimeId: true, codingHoursPaid: true },
   })
-  if (current?.hackatimeId && current.hackatimeId !== me.id) {
+  const switching = !!current?.hackatimeId && current.hackatimeId !== me.id
+  if (switching) {
     const [paid] = await db
       .select({ id: schema.ships.id })
       .from(schema.ships)
       .innerJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
       .where(and(eq(schema.projects.userId, user.id), isNotNull(schema.ships.pixelsAwarded)))
       .limit(1)
-    if (paid) {
+    if (paid || current!.codingHoursPaid > 0) {
       throw createError({
         statusCode: 409,
         statusMessage: "You've already been paid for time from another Hackatime account, so it can't be changed",
@@ -139,6 +140,8 @@ export default defineEventHandler(async (event) => {
           created_at: new Date(token.created_at * 1000).toISOString(),
         },
         hackatimeId: me.id,
+        // A different account starts pay-as-you-code from scratch (nothing was paid on the old one)
+        ...(switching ? { codingBaselineSeconds: null } : {}),
       })
       .where(eq(schema.users.id, user.id))
   } catch (error) {
@@ -146,5 +149,6 @@ export default defineEventHandler(async (event) => {
     if (isUniqueViolation(error)) throw alreadyLinked()
     throw error
   }
+
   return sendRedirect(event, returnPage)
 })

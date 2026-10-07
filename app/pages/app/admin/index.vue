@@ -63,6 +63,12 @@ const sections = [
     description: "Daily and hourly active users",
   },
   {
+    to: "/app/admin/funnel",
+    label: "funnel",
+    icon: "lucide:filter",
+    description: "How many people get through each step of getting started",
+  },
+  {
     to: "/app/admin/audit",
     label: "audit log",
     icon: "lucide:scroll-text",
