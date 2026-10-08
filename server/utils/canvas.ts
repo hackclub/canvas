@@ -166,6 +166,8 @@ export function placePixels(userId: string, requested: PixelPlacement[]) {
       for (const [i, p] of placed) setColor(data, i, p.color)
       snapshot = undefined
       broadcast(placed.map(([, p]) => p))
+      // Their first drawing can be what earns whoever referred them their pixels
+      await payReferral(userId)
     }
     return {
       rejected: changes.slice(placed.length).map(([, p]) => p),

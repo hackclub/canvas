@@ -41,6 +41,8 @@ export async function refreshEligibility(userId: string): Promise<Eligibility> {
           yswsEligible: identity.ysws_eligible ?? false,
         })
         .where(eq(schema.users.id, userId))
+      // Becoming eligible can be what earns whoever referred them their pixels
+      await payReferral(userId)
     }
   } catch (e) {
     console.error('Eligibility refresh failed:', e)

@@ -1,7 +1,7 @@
 // Define tables here, then run `pnpm db:generate` + `pnpm db:migrate` (or `pnpm db:push`)
 // to apply them. See server/api/db.get.ts for query examples.
 import { sql } from 'drizzle-orm'
-import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { type AnyPgColumn, bigint, boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import type { AdminAction } from '../../shared/types/audit'
 import type { AuthUser } from '../../shared/types/auth'
 import type { ShipJustification, ShipStatus } from '../../shared/types/ships'
@@ -60,6 +60,12 @@ export const users = pgTable('users', {
   codingBaselines: jsonb('coding_baselines').$type<Record<string, number>>().notNull().default({}),
   // Whole hours of counted time that have already been paid for
   codingHoursPaid: integer('coding_hours_paid').notNull().default(0),
+  // Their referral link is /?ref=<code>. Made the first time they look at it.
+  referralCode: text('referral_code').unique(),
+  // Who referred them, set when they first sign up through that link and never changed
+  referredBy: text('referred_by').references((): AnyPgColumn => users.id, { onDelete: 'set null' }),
+  // When the person who referred them was paid for them, so it only happens once
+  referralRewardedAt: timestamp('referral_rewarded_at', { withTimezone: true }),
   // When they first signed in, for the admin graphs
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   // Seconds on the Hackatime projects linked to their projects (since HACKATIME_START) the
@@ -152,7 +158,7 @@ export const canvasPixelLog = pgTable('canvas_pixel_log', {
 }, (t) => [index('canvas_pixel_log_placed_at_idx').on(t.placedAt)])
 
 // Why a user's pixel balance changed
-export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup'
+export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup' | 'referral'
 
 // Every change to a user's pixel balance, for the admin audit log
 export const pixelTransactions = pgTable('pixel_transactions', {

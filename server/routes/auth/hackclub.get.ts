@@ -92,7 +92,22 @@ export default defineEventHandler(async (event) => {
         ...(slackDisplayName !== undefined && { slackDisplayName }),
       },
     })
-    .returning({ isAdmin: schema.users.isAdmin, hackatime: schema.users.hackatime, setupRewardedAt: schema.users.setupRewardedAt })
+    .returning({
+      isAdmin: schema.users.isAdmin,
+      hackatime: schema.users.hackatime,
+      setupRewardedAt: schema.users.setupRewardedAt,
+      // xmax is 0 for a row that was just inserted, so this is true only for a brand new user
+      inserted: sql<boolean>`(xmax = 0)`,
+    })
+
+  // A referral link only counts for people signing up for the first time
+  const referralCode = getCookie(event, 'canvas_ref')
+  if (referralCode) {
+    deleteCookie(event, 'canvas_ref', { path: '/' })
+    if (dbUser!.inserted) await setReferrer(identity.id, referralCode).catch((e) => console.error('Failed to set referrer', e))
+  }
+  // They may have just become eligible, having already drawn
+  await payReferral(identity.id)
 
   // Only what the UI needs. The session cookie is also sent to the browser, so it
   // shouldn't hold the rest of the identity (email, address, birthday).

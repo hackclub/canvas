@@ -44,6 +44,9 @@
             <template v-else-if="t.reason === 'coding'">
               — paid for hours coded</template
             >
+            <template v-else-if="t.reason === 'referral'">
+              — got pixels for someone they referred</template
+            >
             <template v-else-if="t.reason === 'setup'">
               — got a pixel for creating their first project</template
             >
