@@ -76,6 +76,31 @@
 
         <p v-if="bannerError" class="mt-2 text-red-400">{{ bannerError }}</p>
 
+        <p
+          v-if="route.query.rewarded"
+          class="mt-4 border-2 border-white px-4 py-3 font-bold"
+        >
+          You got 1 pixel for creating your first project!
+        </p>
+
+        <!-- pixels are only paid for time on Hackatime projects linked to a project -->
+        <div
+          v-if="!project.hackatimeProjects.length && !locked"
+          class="mt-4 border-2 border-yellow-300 px-4 py-3"
+        >
+          <p class="flex items-center gap-2 font-bold">
+            <Icon name="lucide:clock" /> link a Hackatime project to start
+            earning pixels
+          </p>
+          <p class="mt-1 text-sm opacity-70">
+            You earn pixels for every hour you code on linked projects. Pick the
+            one you're working on below and save.
+          </p>
+          <NuxtLink to="#hackatime-projects" class="mt-2 inline-block text-sm">
+            take me there
+          </NuxtLink>
+        </div>
+
         <div
           v-if="latestShip"
           class="mt-4 border-2 px-4 py-3"
@@ -118,7 +143,9 @@
 
             <div class="flex flex-wrap gap-x-8 gap-y-3">
               <div>
-                <p class="font-bold text-2xl">{{ formatHours(totalSeconds) }}</p>
+                <p class="font-bold text-2xl">
+                  {{ formatHours(totalSeconds) }}
+                </p>
                 <p class="opacity-70">Total hours</p>
               </div>
               <div>
@@ -141,7 +168,7 @@
               />
             </label>
 
-            <div>
+            <div id="hackatime-projects">
               <p class="font-semibold">Hackatime projects</p>
               <p class="text-sm opacity-70">
                 Time from these Hackatime projects counts towards this project.

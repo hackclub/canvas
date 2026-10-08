@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!created" class="space-y-2 p-6">
+  <div class="space-y-2 p-6">
     <h1 class="text-2xl font-bold">make your first project</h1>
     <p class="mb-3">
       Everything you build in Canvas lives in a project. Name yours, you can
@@ -24,24 +24,6 @@
     </form>
     <p v-if="error" class="text-red-600">{{ error }}</p>
   </div>
-  <div v-else class="space-y-2 p-6">
-    <h1 class="text-2xl font-bold">all done</h1>
-    <p class="mb-3">
-      <template v-if="created.rewarded">
-        You got <b>1 pixel</b> for creating your first project!
-      </template>
-      Link your Hackatime projects to it on its page, then head into Canvas to
-      look around.
-    </p>
-    <div class="flex flex-wrap gap-2">
-      <UiButtonSmall :to="`/app/projects/${created.id}`" icon="lucide:folder">
-        open project
-      </UiButtonSmall>
-      <UiButtonSmall to="/app" icon="lucide:arrow-right">
-        let me in!!
-      </UiButtonSmall>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -52,15 +34,19 @@ definePageMeta({
 const name = ref("");
 const saving = ref(false);
 const error = ref("");
-const created = ref<{ id: number; rewarded: boolean } | null>(null);
 
 async function create() {
   saving.value = true;
   error.value = "";
   try {
-    created.value = await $fetch("/api/projects", {
+    const created = await $fetch("/api/projects", {
       method: "POST",
       body: { name: name.value },
+    });
+    // Straight into the project, where they're asked to link their Hackatime projects
+    await navigateTo({
+      path: `/app/projects/${created.id}`,
+      query: created.rewarded ? { rewarded: "1" } : {},
     });
   } catch (e) {
     error.value =
