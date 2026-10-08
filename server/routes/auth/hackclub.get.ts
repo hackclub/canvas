@@ -100,6 +100,9 @@ export default defineEventHandler(async (event) => {
       inserted: sql<boolean>`(xmax = 0)`,
     })
 
+  // Brand new users are added to the Slack channel (SLACK_CHANNEL_ID), without holding up their sign-in
+  if (dbUser!.inserted && slackId) void addToSlackChannel(slackId)
+
   // A referral link only counts for people signing up for the first time
   const referralCode = getCookie(event, 'canvas_ref')
   if (referralCode) {

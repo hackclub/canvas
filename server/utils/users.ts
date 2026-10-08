@@ -33,3 +33,23 @@ export async function fetchSlackDisplayName(slackId: string) {
     return undefined
   }
 }
+
+// Adds a Slack user to the channel in SLACK_CHANNEL_ID, for people signing up to Canvas. Does
+// nothing if no channel is set. The bot has to be in the channel, with the channels:manage
+// scope (groups:write for a private channel). Never throws: it's not worth failing a
+// sign-in over.
+export async function addToSlackChannel(slackId: string) {
+  const { slack } = useRuntimeConfig()
+  if (!slack.botToken || !slack.channelId) return
+  try {
+    const res = await $fetch<{ ok: boolean, error?: string }>('https://slack.com/api/conversations.invite', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${slack.botToken}` },
+      body: { channel: slack.channelId, users: slackId },
+    })
+    // Already being in the channel is what we wanted
+    if (!res.ok && res.error !== 'already_in_channel') throw new Error(res.error)
+  } catch (error) {
+    console.error('Failed to add user to the Slack channel:', error)
+  }
+}

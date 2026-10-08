@@ -41,6 +41,8 @@ export default defineNuxtConfig({
     // Slack bot token, for looking up display names; overridable with NUXT_SLACK_BOT_TOKEN
     slack: {
       botToken: process.env.SLACK_XOXB ?? '',
+      // Channel new users are added to when they sign up; overridable with NUXT_SLACK_CHANNEL_ID
+      channelId: process.env.SLACK_CHANNEL_ID ?? '',
     },
     // Cloudflare R2 (S3-compatible) for uploaded images; overridable with NUXT_R2_*
     r2: {

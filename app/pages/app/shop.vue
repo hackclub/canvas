@@ -56,6 +56,19 @@
             </div>
           </div>
         </article>
+        <article
+          class="flex flex-col items-center justify-center text-center border-4 border-black"
+        >
+          <Icon name="lucide:shopping-cart" :size="48" />
+          <p class="font-bold mt-3">More items coming soon..</p>
+          <p>
+            Until then,
+            <NuxtLink
+              to="https://airtable.com/app4iSJSXCxyAiL5c/pagWmLWAssdWPExF4/form"
+              >suggest some!</NuxtLink
+            >
+          </p>
+        </article>
       </div>
       <p v-else class="opacity-60 italic">
         Nothing in the shop yet, check back soon!
@@ -75,6 +88,6 @@ const { data: shop } = await useFetch("/api/shop");
 // Placeholder until buying is built
 const notice = ref("");
 function buy() {
-  notice.value = "Buying isn't open yet, check back soon!";
+  notice.value = "you don't have enough bonus points, silly.";
 }
 </script>
