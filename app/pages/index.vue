@@ -32,18 +32,25 @@
           >
         </div>
         <p class="opacity-50">October 8th - October 22nd</p>
+        <p class="opacity-50">
+          <NuxtLink
+            to="https://hackclub.enterprise.slack.com/archives/CN271UYS0"
+            >#canvas</NuxtLink
+          >
+          - by emma
+        </p>
       </div>
     </section>
 
     <!-- above the next section's overlap, so it isn't covered -->
     <section class="relative z-20 -mt-70">
-      <ShopMarquee />
+      <ShopMarquee class="relative -top-30 sm:-top-20 md:-top-10 lg:top-0" />
     </section>
 
     <section class="relative -mt-70 z-10">
       <NuxtImg src="/img/pixelbg.svg" class="w-full" />
-      <div class="bg-black text-white min-h-200 pb-24 -mt-10 w-full">
-        <div class="flex justify-center">
+      <div class="bg-black text-white pb-24 -mt-10 w-full">
+        <div class="flex justify-center pt-35 sm:pt-30 lg:pt-15">
           <div class="w-300 max-w-full px-4 space-y-10">
             <div class="grid grid-cols-2 gap-4 items-center">
               <div class="space-y-4">
@@ -74,11 +81,16 @@
               </div>
             </div>
 
-            <div class="flex justify-center mt-20">
-              <div class="space-y-4 w-200 max-w-full">
-                <h2 class="font-bold text-4xl">FAQ</h2>
-                <div class="border-4 border-white">
-                  <UiAccordion :items="faq" />
+            <div class="mt-20 space-y-4">
+              <h2 class="font-bold text-4xl">FAQ</h2>
+              <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                  v-for="item in faq"
+                  :key="item.title"
+                  class="border-4 border-white p-5 space-y-2"
+                >
+                  <h3 class="font-bold text-xl">{{ item.title }}</h3>
+                  <p class="opacity-80">{{ item.text }}</p>
                 </div>
               </div>
             </div>
@@ -86,6 +98,49 @@
         </div>
       </div>
     </section>
+    <footer
+      :style="`background-image: url(/img/random-pixels-${pixelsNumber}.svg)`"
+      class="bg-repeat-y bg-cover"
+    >
+      <div class="flex justify-center">
+        <div class="w-300 max-w-full p-4 py-8 space-y-10">
+          <div class="text-white">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-black p-4 space-y-3 max-w-100">
+                <SvgHackLogo :width="100" />
+                <p>
+                  <b>Hack Club</b> is the world's largest nonprofit movement of
+                  teenagers making cool projects.
+                </p>
+                <!-- prettier-ignore -->
+                <div class="flex flex-col gap-1">
+                  <NuxtLink to="https://hackclub.com">Hack Club <Icon name="lucide:arrow-up-right"/></NuxtLink>
+                  <NuxtLink to="https://hackclub.com/privacy-and-terms">Terms & Privacy Policy <Icon name="lucide:arrow-up-right"/></NuxtLink>
+                  <NuxtLink to="https://forms.hackclub.com/bounty">Fulfillment bounty <Icon name="lucide:arrow-up-right"/></NuxtLink>
+                  <NuxtLink to="https://security.hackclub.com/">Security <Icon name="lucide:arrow-up-right"/></NuxtLink>
+                </div>
+              </div>
+              <div class="flex justify-end">
+                <div>
+                  <div class="bg-black p-4 space-y-3 max-w-100">
+                    <p>
+                      made with <3 by
+                      <NuxtLink to="https://prpl.wtf">emma</NuxtLink> for hack
+                      club!
+                    </p>
+                    <!-- prettier-ignore -->
+                    <div class="flex flex-col gap-1">
+                      <NuxtLink to="/app">open canvas</NuxtLink>
+                      <NuxtLink to="https://hackclub.enterprise.slack.com/archives/CN271UYS0">#canvas</NuxtLink>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -94,38 +149,45 @@ definePageMeta({
   layout: "blank",
 });
 
+// Picked when the server renders the page and passed on to the browser, so a new one shows
+// on every load without the browser disagreeing with the server
+const pixelsNumber = useState(
+  "random-pixels",
+  () => Math.floor(Math.random() * 10) + 1,
+);
+
 const faq = [
   {
     title: "What is Canvas?",
     text: "Canvas is a Hack Club program where you build projects, get pixels and draw on one large canvas. The end result gets put up at Hack Club HQ and is available in the shop as a poster or postcard! You can get some awesome other prizes as well :D",
   },
   {
+    title: "How do I get pixels?",
+    text: "By building projects! While you're building, you get a few pixels for each hour of work. Ship your project, and get a bunch of extra pixels... AND BONUS POINTS!!",
+  },
+  {
+    title: "What are bonus points?",
+    text: "BONUS POINTS!! Use bonus points to get awesome prizes. Get bonus points by shipping projects!",
+  },
+  {
     title: "When does it run?",
     text: "October 8th to October 22nd.",
   },
   {
-    title: "How do I get pixels?",
-    text: "Two ways. You earn pixels as you code, tracked through Hackatime on the projects you've linked. And when you ship a project and it gets approved, you're paid for the hours you put into it, with the first 10 hours of a project paying the most.",
-  },
-  {
-    title: "What are bonus points?",
-    text: "You get bonus points for the hours on a project once it's shipped and approved. Trade them in the shop for prizes.",
-  },
-  {
-    title: "What is Hackatime?",
-    text: "Hackatime is Hack Club's free coding time tracker. It's how Canvas knows how long you've worked on a project, so you'll link your account when you sign up.",
+    title: "Who is eligible?",
+    text: "You need to be 13-18 years old to participate.",
   },
   {
     title: "What counts as a project?",
-    text: "Anything software you build yourself. Link the Hackatime projects you worked on, add a demo and a link to the code, and say how you used AI. A first ship needs at least an hour of work, and shipping an update needs at least 30 minutes since your last approved ship.",
+    text: "All kinds of technical projects, as long as it's open-source!",
   },
   {
-    title: "Who can join?",
-    text: "You need to sign in with Hack Club Auth and be verified and eligible before you can ship a project. You can start building and drawing while that's being checked.",
+    title: "Can I build multiple projects?",
+    text: "YES! Build as many projects as you want ^-^",
   },
   {
-    title: "Can I draw anything I want?",
-    text: "Be kind: the canvas ends up on a wall at HQ. People who draw things they shouldn't can be banned from the canvas.",
+    title: "Who's running this?",
+    text: "Emma!",
   },
 ];
 

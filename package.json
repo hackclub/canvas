@@ -16,7 +16,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@nuxt/eslint": "1.17.0",
     "@nuxt/fonts": "0.14.0",
     "@nuxt/hints": "1.1.4",
     "@nuxt/icon": "2.5.1",
@@ -24,7 +23,6 @@
     "@tailwindcss/vite": "^4.3.3",
     "aws4fetch": "^1.0.20",
     "drizzle-orm": "^0.45.3",
-    "eslint": "^10.12.0",
     "nuxt": "^4.6.0",
     "nuxt-auth-utils": "^0.5.30",
     "postgres": "^3.4.9",
