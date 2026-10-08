@@ -232,7 +232,7 @@ export const adminActions = pgTable('admin_actions', {
 }, (t) => [index('admin_actions_created_at_idx').on(t.createdAt)])
 
 // One row per user per hour they made an authenticated request, for the admin activity graphs.
-// Daily active users are counted from these too, so there's no separate daily table.
+// Daily active users are counted from these (and kept in daily_active_users once a day is over).
 export const userActivity = pgTable('user_activity', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   // Start of the hour (UTC)
@@ -248,4 +248,13 @@ export const statSnapshots = pgTable('stat_snapshots', {
   // Start of the hour (UTC)
   hour: timestamp('hour', { withTimezone: true }).primaryKey(),
   unshippedSeconds: integer('unshipped_seconds').notNull(),
+})
+
+// Daily active users for each UTC day that's over, so the admin graphs don't count the hourly
+// rows again every time. A day is saved the first time it's asked for after it ends, and then
+// never changes (even if a user is deleted later), the current day is always counted live.
+export const dailyActiveUsers = pgTable('daily_active_users', {
+  // Start of the day (UTC)
+  day: timestamp('day', { withTimezone: true }).primaryKey(),
+  users: integer('users').notNull(),
 })

@@ -3,13 +3,9 @@
     <div class="max-w-full w-250 px-4 md:px-8 py-3 space-y-4">
       <UiCard>
         <h1 class="font-bold text-3xl">shop</h1>
-        <p class="mt-3">trade your bonus points for prizes!</p>
-        <p class="mt-3 font-bold text-2xl">
-          {{ (shop?.bonusPoints ?? 0).toLocaleString() }} bonus points
-        </p>
-        <p class="text-sm opacity-70">
-          Get 5 for every hour you spend on a project, once it's shipped and
-          approved.
+        <p class="mt-3">
+          trade your bonus points for prizes. get 5 bonus points per hour
+          shipped!
         </p>
       </UiCard>
 

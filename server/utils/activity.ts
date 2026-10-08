@@ -29,6 +29,54 @@ export async function recordActivity(userId: string) {
   }
 }
 
+const DAY = 24 * HOUR
+
+// Active users for each UTC day from `start` up to `end` (both day starts, in ms), as rows
+// like the hourly ones. Days that are over come from daily_active_users, and the ones that
+// aren't in it yet are counted (together, in one query) and saved. Today is counted every time.
+async function getDailyActiveUsers(start: number, end: number) {
+  const db = useDB()
+  const todayStart = Math.floor(Date.now() / DAY) * DAY
+  const days: number[] = []
+  for (let t = start; t < end; t += DAY) days.push(t)
+
+  const pastEnd = Math.min(end, todayStart)
+  const cached = pastEnd > start
+    ? await db.select().from(schema.dailyActiveUsers)
+        .where(and(gte(schema.dailyActiveUsers.day, new Date(start)), lt(schema.dailyActiveUsers.day, new Date(pastEnd))))
+    : []
+  const counts = new Map(cached.map((r) => [r.day.getTime(), r.users]))
+
+  // Everything not cached: past days that were never saved, and today
+  const uncounted = days.filter((t) => !counts.has(t))
+  if (uncounted.length) {
+    const from = uncounted[0]!
+    const rows = await db
+      .select({
+        day: sql<Date>`date_trunc('day', ${schema.userActivity.hour} at time zone 'UTC') at time zone 'UTC'`.mapWith((v) => new Date(v)),
+        users: sql<number>`count(distinct ${schema.userActivity.userId})::int`,
+      })
+      .from(schema.userActivity)
+      .where(and(gte(schema.userActivity.hour, new Date(from)), lt(schema.userActivity.hour, new Date(end))))
+      .groupBy(sql`1`)
+    const byDay = new Map(rows.map((r) => [new Date(r.day).getTime(), r.users]))
+
+    const toSave: { day: Date, users: number }[] = []
+    for (const t of uncounted) {
+      const users = byDay.get(t) ?? 0
+      counts.set(t, users)
+      // Days that are over won't change, so they're saved. Today isn't.
+      if (t < todayStart) toSave.push({ day: new Date(t), users })
+    }
+    if (toSave.length) {
+      await db.insert(schema.dailyActiveUsers).values(toSave).onConflictDoNothing()
+        .catch((e) => console.error('Failed to save daily active users', e))
+    }
+  }
+
+  return days.map((t) => ({ at: new Date(t), users: counts.get(t) ?? 0 }))
+}
+
 export const ACTIVITY_MAX_DAYS = 60
 
 // Reads ?from= and ?to= (YYYY-MM-DD, UTC days, inclusive) for the admin graphs. Defaults to the
@@ -71,14 +119,7 @@ export async function getActivity(from: Date, to: Date) {
       .from(schema.userActivity)
       .where(range)
       .groupBy(schema.userActivity.hour),
-    useDB()
-      .select({
-        at: sql<Date>`date_trunc('day', ${schema.userActivity.hour} at time zone 'UTC') at time zone 'UTC'`.mapWith((v) => new Date(v)),
-        users: sql<number>`count(distinct ${schema.userActivity.userId})::int`,
-      })
-      .from(schema.userActivity)
-      .where(range)
-      .groupBy(sql`1`),
+    getDailyActiveUsers(start, end),
     useDB().select({ count: sql<number>`count(*)::int` }).from(schema.users),
   ])
 
