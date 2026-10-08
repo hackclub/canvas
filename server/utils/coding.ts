@@ -2,7 +2,7 @@ import { eq, sql } from 'drizzle-orm'
 
 // Pixels per whole hour coded, paid as the time shows up in Hackatime. Separate from, and in
 // addition to, what shipping pays (server/utils/payouts.ts).
-export const CODING_PIXELS_PER_HOUR = 5
+export const CODING_PIXELS_PER_HOUR = 10
 
 // Hackatime is only ever called from syncCodingPixels, i.e. when the user asks for their
 // progress, and at most once per user per SYNC_INTERVAL (also after a failure, so an outage

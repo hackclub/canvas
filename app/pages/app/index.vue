@@ -74,7 +74,7 @@
           </ul>
         </div>
         <div class="p-5 py-3 bg-black text-white">
-          <span>complete all items for 25 pixels!</span>
+          <span>complete all items for 50 pixels!</span>
         </div>
       </div>
 
