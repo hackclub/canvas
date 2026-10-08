@@ -50,15 +50,18 @@ export default defineEventHandler(async (event) => {
         .where(eq(schema.users.id, user.id))
         .for('update')
 
-      // Hackatime projects can't be counted towards more than one project...
-      const conflict = await tx.query.projects.findFirst({
-        where: and(
-          eq(schema.projects.userId, user.id),
-          ne(schema.projects.id, project.id),
-          arrayOverlaps(schema.projects.hackatimeProjects, names),
-        ),
-        columns: { name: true, hackatimeProjects: true },
-      })
+      // Hackatime projects can't be counted towards more than one project... (nothing to
+      // check when unlinking them all, and arrayOverlaps throws for an empty list)
+      const conflict = names.length
+        ? await tx.query.projects.findFirst({
+            where: and(
+              eq(schema.projects.userId, user.id),
+              ne(schema.projects.id, project.id),
+              arrayOverlaps(schema.projects.hackatimeProjects, names),
+            ),
+            columns: { name: true, hackatimeProjects: true },
+          })
+        : undefined
       if (conflict) {
         const taken = names.find((name) => conflict.hackatimeProjects.includes(name))
         throw createError({ statusCode: 409, statusMessage: `"${taken}" is already linked to ${conflict.name}` })
