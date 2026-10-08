@@ -1,7 +1,7 @@
 // Define tables here, then run `pnpm db:generate` + `pnpm db:migrate` (or `pnpm db:push`)
 // to apply them. See server/api/db.get.ts for query examples.
 import { sql } from 'drizzle-orm'
-import { boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import { bigint, boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 import type { AdminAction } from '../../shared/types/audit'
 import type { AuthUser } from '../../shared/types/auth'
 import type { ShipJustification, ShipStatus } from '../../shared/types/ships'
@@ -60,6 +60,11 @@ export const users = pgTable('users', {
   codingBaselines: jsonb('coding_baselines').$type<Record<string, number>>().notNull().default({}),
   // Whole hours of counted time that have already been paid for
   codingHoursPaid: integer('coding_hours_paid').notNull().default(0),
+  // When they first signed in, for the admin graphs
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // Seconds on the Hackatime projects linked to their projects (since HACKATIME_START) the
+  // last time pay-as-you-code looked, for the admin graphs' unshipped hours
+  linkedSecondsSeen: integer('linked_seconds_seen').notNull().default(0),
   // Pixels currency balance, spent on the canvas
   pixels: integer('pixels').notNull().default(0),
   // Bonus points currency balance, spent in the shop
@@ -131,6 +136,20 @@ export const canvasPixels = pgTable('canvas_pixels', {
   userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
   placedAt: timestamp('placed_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [primaryKey({ columns: [t.x, t.y] })])
+
+// Every pixel ever drawn, in order, for making a timelapse of the canvas afterwards. Only ever
+// added to: canvas_pixels holds the current board, this holds how it got there. Replay it
+// by id (or placed_at), drawing each row over the last. The user is kept as null if they're
+// deleted, so the timelapse stays complete.
+export const canvasPixelLog = pgTable('canvas_pixel_log', {
+  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+  x: smallint('x').notNull(),
+  y: smallint('y').notNull(),
+  // 0xRRGGBB
+  color: integer('color').notNull(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  placedAt: timestamp('placed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index('canvas_pixel_log_placed_at_idx').on(t.placedAt)])
 
 // Why a user's pixel balance changed
 export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup'
@@ -216,3 +235,11 @@ export const userActivity = pgTable('user_activity', {
   primaryKey({ columns: [t.userId, t.hour] }),
   index('user_activity_hour_idx').on(t.hour),
 ])
+
+// Hourly record of hours coded but not shipped yet, for the admin graphs. Unlike the other
+// graphs this can't be worked out from older data afterwards, so it's saved as it goes.
+export const statSnapshots = pgTable('stat_snapshots', {
+  // Start of the hour (UTC)
+  hour: timestamp('hour', { withTimezone: true }).primaryKey(),
+  unshippedSeconds: integer('unshipped_seconds').notNull(),
+})

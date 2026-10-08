@@ -53,7 +53,8 @@ async function fetchHackatimeProjectDetails(token: string, names: string[]) {
     `${HACKATIME_URL}/api/v1/users/my/projects/details`,
     {
       headers: { Authorization: `Bearer ${token}` },
-      query: { projects: names.join(',') },
+      // Same window as the hours, so the date ranges match them
+      query: { projects: names.join(','), since: HACKATIME_START, start_date: HACKATIME_START },
     },
   )
   return projects

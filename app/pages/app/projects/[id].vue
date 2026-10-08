@@ -242,8 +242,8 @@
                 class="mt-1 size-5 accent-white"
               />
               <span>
-                This project was started <b>before Canvas</b>, or was
-                <b>previously shipped</b> to a Hack Club event.
+                This project was started <b>before Canvas</b> (October 8th), or
+                was <b>previously shipped</b> to a Hack Club event.
               </span>
             </label>
 

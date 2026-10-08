@@ -150,6 +150,9 @@ export function placePixels(userId: string, requested: PixelPlacement[]) {
             placedAt: sql`excluded.placed_at`,
           },
         })
+      await tx
+        .insert(schema.canvasPixelLog)
+        .values(placed.map(([, p]) => ({ x: p.x, y: p.y, color: p.color, userId })))
       await tx.insert(schema.pixelTransactions).values({
         userId,
         amount: -placed.length,

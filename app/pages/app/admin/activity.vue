@@ -27,20 +27,41 @@
 
       <p v-if="error" class="font-bold">{{ error.statusMessage || "Couldn't load activity" }}</p>
 
-      <template v-else-if="data">
-        <div class="border-4 border-black p-5">
-          <p class="opacity-70">total users</p>
-          <p class="font-bold text-3xl">{{ data.totalUsers }}</p>
-        </div>
+      <template v-else-if="data && stats">
+        <!-- right now, whatever dates are picked -->
+        <dl class="grid gap-4 sm:grid-cols-3">
+          <div
+            v-for="c in current"
+            :key="c.label"
+            class="border-4 border-black p-4"
+          >
+            <dt class="opacity-70">{{ c.label }}</dt>
+            <dd class="font-bold text-2xl">{{ c.value }}</dd>
+          </div>
+        </dl>
 
         <div class="border-4 border-black p-5">
           <h2 class="font-bold text-xl mb-3">daily active users</h2>
-          <AdminBarChart :points="data.daily" />
+          <AdminBarChart :points="asValues(data.daily)" />
         </div>
 
         <div class="border-4 border-black p-5">
           <h2 class="font-bold text-xl mb-3">hourly active users</h2>
-          <AdminBarChart :points="data.hourly" hourly />
+          <AdminBarChart :points="asValues(data.hourly)" hourly />
+        </div>
+
+        <p class="text-sm opacity-70">
+          The rest are totals at the end of each day (today's is so far).
+        </p>
+
+        <div
+          v-for="c in charts"
+          :key="c.title"
+          class="border-4 border-black p-5"
+        >
+          <h2 class="font-bold text-xl">{{ c.title }}</h2>
+          <p class="text-sm opacity-70 mb-3">{{ c.note }}</p>
+          <AdminBarChart :points="stats[c.key]" :unit="c.unit" />
         </div>
       </template>
     </div>
@@ -61,4 +82,53 @@ const from = ref(day(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)));
 const { data, error } = await useFetch("/api/admin/activity", {
   query: { from, to },
 });
+const { data: stats } = await useFetch("/api/admin/stats", {
+  query: { from, to },
+});
+
+const asValues = (points: { at: string; users: number }[]) =>
+  points.map((p) => ({ at: p.at, value: p.users }));
+
+const n = (v: number) => v.toLocaleString();
+const current = computed(() => {
+  const c = stats.value?.current;
+  if (!c) return [];
+  return [
+    { label: "total users", value: n(c.users) },
+    { label: "total projects", value: n(c.projects) },
+    { label: "unshipped hours", value: n(c.unshippedHours) },
+    { label: "shipped hours", value: n(c.shippedHours) },
+    { label: "pixels in circulation", value: n(c.pixels) },
+    { label: "bonus points in circulation", value: n(c.bonusPoints) },
+  ];
+});
+
+const charts = [
+  { key: "users", title: "total users", note: "By when they first signed in.", unit: "" },
+  { key: "projects", title: "total projects", note: "Projects that still exist.", unit: "" },
+  {
+    key: "unshippedHours",
+    title: "unshipped hours",
+    note: "Hours on linked Hackatime projects that haven't been shipped and paid. Only saved from when this was added, and as fresh as people's last visit.",
+    unit: "h",
+  },
+  {
+    key: "shippedHours",
+    title: "shipped hours",
+    note: "Hours paid for by approved ships, counted when they were approved.",
+    unit: "h",
+  },
+  {
+    key: "pixels",
+    title: "pixels in circulation",
+    note: "Pixels people are holding: earned minus spent on the canvas.",
+    unit: "",
+  },
+  {
+    key: "bonusPoints",
+    title: "bonus points in circulation",
+    note: "Bonus points people are holding.",
+    unit: "",
+  },
+] as const;
 </script>

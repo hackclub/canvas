@@ -91,9 +91,12 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
     }
 
     let coded = 0
+    let linkedSeconds = 0
     for (const name of linked) {
+      if (name in totals) linkedSeconds += totals[name]!
       if (name in baselines && name in totals) coded += Math.max(0, totals[name]! - baselines[name]!)
     }
+    await tx.update(schema.users).set({ linkedSecondsSeen: Math.round(linkedSeconds) }).where(eq(schema.users.id, userId))
 
     const progress = (awarded = 0): CodingProgress => {
       const paidSeconds = (row.paid + awarded / CODING_PIXELS_PER_HOUR) * 3600

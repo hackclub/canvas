@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     const names = parseHackatimeProjectNames(body.hackatimeProjects)
     if (names.length) {
       // Only allow the user's own Hackatime projects
-      const hackatimeProjects = await getHackatimeProjects(user.id)
+      const hackatimeProjects = await getHackatimeProjects(user.id, { all: true })
       if (!hackatimeProjects) {
         throw createError({ statusCode: 400, statusMessage: 'Link Hackatime before adding Hackatime projects' })
       }

@@ -15,6 +15,8 @@ export async function recordActivity(userId: string) {
   // Drop users from previous hours so the map doesn't grow forever
   for (const [id, h] of lastRecorded) if (h !== hour) lastRecorded.delete(id)
 
+  recordStatSnapshot(hour)
+
   try {
     await useDB()
       .insert(schema.userActivity)
@@ -28,6 +30,30 @@ export async function recordActivity(userId: string) {
 }
 
 export const ACTIVITY_MAX_DAYS = 60
+
+// Reads ?from= and ?to= (YYYY-MM-DD, UTC days, inclusive) for the admin graphs. Defaults to the
+// last 7 days, and 400s for ranges over ACTIVITY_MAX_DAYS.
+export function parseActivityRange(event: import('h3').H3Event) {
+  const query = getQuery(event)
+  const parseDay = (v: unknown) => {
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null
+    const d = new Date(`${v}T00:00:00Z`)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
+  const today = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`)
+  const to = parseDay(query.to) ?? today
+  const from = parseDay(query.from) ?? new Date(to.getTime() - 6 * 24 * 60 * 60 * 1000)
+
+  const days = (to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000) + 1
+  if (days < 1 || days > ACTIVITY_MAX_DAYS) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Pick a range of 1 to ${ACTIVITY_MAX_DAYS} days`,
+    })
+  }
+  return { from, to }
+}
 
 // Active users per UTC day and per hour between `from` and `to` (inclusive days), with
 // empty buckets filled in as zero
