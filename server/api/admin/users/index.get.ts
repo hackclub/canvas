@@ -9,6 +9,8 @@ export default defineEventHandler(async (event) => {
       identity: schema.users.identity,
       pixels: schema.users.pixels,
       isAdmin: schema.users.isAdmin,
+      verificationStatus: schema.users.verificationStatus,
+      yswsEligible: schema.users.yswsEligible,
       slackId: schema.users.slackId,
       hackatimeId: schema.users.hackatimeId,
       hackatimeLinked: isNotNull(schema.users.hackatime).mapWith(Boolean),

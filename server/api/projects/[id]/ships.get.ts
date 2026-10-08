@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
       id: true,
       status: true,
       feedback: true,
+      hackatimeSeconds: true,
       pixelsAwarded: true,
       bonusPointsAwarded: true,
       createdAt: true,

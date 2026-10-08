@@ -94,6 +94,24 @@
       </div>
 
       <div class="space-y-2">
+        <h3 class="font-bold text-lg">canvas</h3>
+        <UiButtonSmall
+          :icon="u?.canvasBanned ? 'lucide:brush' : 'lucide:ban'"
+          :disabled="saving"
+          @click="update({ canvasBanned: !u?.canvasBanned })"
+        >
+          {{ u?.canvasBanned ? "let them draw again" : "ban from drawing" }}
+        </UiButtonSmall>
+        <p class="text-sm opacity-70">
+          {{
+            u?.canvasBanned
+              ? "They're banned from drawing, and can't place pixels."
+              : "They'll keep their pixels but can't place any on the canvas."
+          }}
+        </p>
+      </div>
+
+      <div class="space-y-2">
         <h3 class="font-bold text-lg">admin</h3>
         <UiButtonSmall
           :icon="u?.isAdmin ? 'lucide:shield-off' : 'lucide:shield'"
@@ -198,6 +216,7 @@ async function update(body: {
   pixels?: BalanceChange;
   bonusPoints?: BalanceChange;
   isAdmin?: boolean;
+  canvasBanned?: boolean;
 }) {
   saving.value = true;
   saveError.value = "";
@@ -244,6 +263,8 @@ const stats = computed(() => [
   { label: "pixels", value: u.value?.pixels ?? 0 },
   { label: "bonus points", value: u.value?.bonusPoints ?? 0 },
   { label: "admin", value: u.value?.isAdmin ? "yes" : "no" },
+  { label: "YSWS eligibility", value: u.value ? eligibilityLabel(u.value) : "" },
+  { label: "canvas", value: u.value?.canvasBanned ? "banned" : "allowed" },
   {
     label: "hackatime",
     value: u.value?.hackatimeLinked ? "linked" : "not linked",

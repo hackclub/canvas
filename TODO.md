@@ -37,20 +37,20 @@
   - [x] progress bar on app home page
   - [x] streaks?
 
-- [ ] finalize introduction setup thing
-  - [ ] admin funnel graph for
+- [x] finalize introduction setup thing
+  - [x] admin funnel graph for
     - signed in with hca
     - verified & eligible
     - hackatime linked
     - project created
     - drawn on canvas
     - project shipped
-  - [ ] require verified & eligible to ship projects
+  - [x] require verified & eligible to ship projects
     - drawing on the canvas is fine
     - usually people will be verified & eligible immediately, edge case it takes a week
       or they get rejected. dont communicate timelines to user, just say like
       "waiting on eligibility" or something
-  - [ ] tutorial-ish thing
+  - [x] tutorial-ish thing
     - people get introduced to canvas during the current setup screen
     - after linking hackatime, they are immediately prompted to create a project
     - after that, they get 1 pixel as a reward and can now explore the website
@@ -78,3 +78,5 @@
 
 - [ ] finish docker container
   - it should host the nuxt app as well
+
+- [ ] pixelated cursor :D

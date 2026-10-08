@@ -15,11 +15,13 @@ export interface ShopItemInput {
   description: string
   price: number
   stock: number | null
+  showInApp: boolean
+  showOnLanding: boolean
 }
 
 // Checks the fields of a shop item being created, or just the ones sent when `partial`
 export function parseShopItem(body: Record<string, unknown> | undefined, partial: true): Partial<ShopItemInput>
-export function parseShopItem(body: Record<string, unknown> | undefined, partial?: false): ShopItemInput
+export function parseShopItem(body: Record<string, unknown> | undefined, partial?: false): Omit<ShopItemInput, 'showInApp' | 'showOnLanding'> & Partial<Pick<ShopItemInput, 'showInApp' | 'showOnLanding'>>
 export function parseShopItem(body: Record<string, unknown> | undefined, partial = false) {
   const item: Partial<ShopItemInput> = {}
   const has = (field: string) => !partial || body?.[field] !== undefined
@@ -52,6 +54,14 @@ export function parseShopItem(body: Record<string, unknown> | undefined, partial
       throw badRequest('Stock must be a whole number, or empty for no limit')
     }
     item.stock = stock as number | null
+  }
+  for (const field of ['showInApp', 'showOnLanding'] as const) {
+    if (has(field)) {
+      // Left out when creating means the column's default
+      if (body?.[field] === undefined && !partial) continue
+      if (typeof body?.[field] !== 'boolean') throw badRequest(`${field} must be true or false`)
+      item[field] = body[field] as boolean
+    }
   }
   return item
 }

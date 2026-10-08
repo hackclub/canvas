@@ -85,10 +85,19 @@ const form = ref<ShopItemForm>({
   description: "",
   price: "",
   stock: "",
+  showInApp: true,
+  showOnLanding: false,
 });
 
 function openCreate() {
-  form.value = { name: "", description: "", price: "", stock: "" };
+  form.value = {
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    showInApp: true,
+    showOnLanding: false,
+  };
   error.value = "";
   creating.value = true;
 }

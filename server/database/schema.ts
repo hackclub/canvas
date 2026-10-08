@@ -54,16 +54,19 @@ export const users = pgTable('users', {
   // When they got the pixel for creating their first project in setup. Kept even if the
   // project is deleted, so deleting and recreating can't earn it again.
   setupRewardedAt: timestamp('setup_rewarded_at', { withTimezone: true }),
-  // Total Hackatime seconds when pay-as-you-code started, so time from before Canvas isn't
-  // paid. Null until the first sync after linking. See syncCodingPixels (server/utils/coding.ts).
-  codingBaselineSeconds: integer('coding_baseline_seconds'),
-  // Whole hours since the baseline that have already been paid for
+  // Pay-as-you-code only counts time on Hackatime projects linked to a Canvas project, after
+  // the total each had when it was first seen: Hackatime project name -> total seconds then.
+  // See syncCodingPixels (server/utils/coding.ts).
+  codingBaselines: jsonb('coding_baselines').$type<Record<string, number>>().notNull().default({}),
+  // Whole hours of counted time that have already been paid for
   codingHoursPaid: integer('coding_hours_paid').notNull().default(0),
   // Pixels currency balance, spent on the canvas
   pixels: integer('pixels').notNull().default(0),
   // Bonus points currency balance, spent in the shop
   bonusPoints: integer('bonus_points').notNull().default(0),
   isAdmin: boolean('is_admin').notNull().default(false),
+  // Set by admins, stops them drawing on the canvas (see placePixels in server/utils/canvas.ts)
+  canvasBanned: boolean('canvas_banned').notNull().default(false),
 })
 
 // Projects are software-only, since time is tracked through Hackatime
@@ -184,6 +187,9 @@ export const shopItems = pgTable('shop_items', {
   price: integer('price').notNull(),
   // How many can be bought in total, null for no limit
   stock: integer('stock'),
+  // Whether it's in the carousel on the app home page, and on the public landing page
+  showInApp: boolean('show_in_app').notNull().default(true),
+  showOnLanding: boolean('show_on_landing').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

@@ -46,6 +46,8 @@
 
       <ShipCarousel />
 
+      <ShopCarousel />
+
       <div>
         <div class="space-y-2 p-5 border-4 border-b-0 border-black">
           <h2 class="font-bold text-xl">to-do</h2>

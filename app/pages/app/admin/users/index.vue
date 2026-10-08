@@ -38,6 +38,9 @@
               >
             </p>
             <p class="text-sm opacity-60 truncate">{{ u.id }}</p>
+            <p class="text-sm opacity-60 truncate">
+              YSWS: {{ eligibilityLabel(u) }}
+            </p>
           </div>
           <div class="shrink-0 text-right text-sm">
             <p>{{ u.pixels }} pixels</p>

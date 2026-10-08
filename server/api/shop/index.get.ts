@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
       columns: { bonusPoints: true },
     }),
     useDB().query.shopItems.findMany({
-      columns: { id: true, name: true, description: true, bannerKey: true, price: true, stock: true },
+      columns: { id: true, name: true, description: true, bannerKey: true, price: true, stock: true, showInApp: true },
       orderBy: [asc(schema.shopItems.price), asc(schema.shopItems.id)],
     }),
   ])

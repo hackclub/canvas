@@ -1,5 +1,6 @@
 import { gzipSync } from 'node:zlib'
 import { eq, sql } from 'drizzle-orm'
+import sharp from 'sharp'
 
 // A pixel to draw: its position on the board and its 0xRRGGBB color
 export interface PixelPlacement {
@@ -52,6 +53,29 @@ export async function getCanvasSnapshot(gzip: boolean) {
   return snapshot
 }
 
+// PNG of the board for the landing page. Not live: it's rendered at most once every
+// PNG_MAX_AGE_SECONDS however many people ask or however often the canvas changes, and
+// shared by everyone, so a busy landing page costs next to nothing.
+export const PNG_MAX_AGE_SECONDS = 5 * 60
+let png: { at: number, body: Promise<Buffer> } | undefined
+
+export function getCanvasPng() {
+  if (!png || Date.now() - png.at > PNG_MAX_AGE_SECONDS * 1000) {
+    const body = useBoard().then((data) =>
+      sharp(Buffer.from(data), { raw: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, channels: 3 } })
+        .png()
+        .toBuffer(),
+    )
+    const entry = { at: Date.now(), body }
+    png = entry
+    // Try again on the next request if it failed, rather than caching the failure
+    body.catch(() => {
+      if (png === entry) png = undefined
+    })
+  }
+  return png.body
+}
+
 // Live updates for GET /api/canvas/stream. Changes are batched and sent every 100ms
 // as a flat JSON array of [x, y, color, x, y, color, ...].
 const listeners = new Set<(message: string) => void>()
@@ -101,10 +125,12 @@ export function placePixels(userId: string, requested: PixelPlacement[]) {
 
     const { placed, balance } = await useDB().transaction(async (tx) => {
       const [user] = await tx
-        .select({ pixels: schema.users.pixels })
+        .select({ pixels: schema.users.pixels, banned: schema.users.canvasBanned })
         .from(schema.users)
         .where(eq(schema.users.id, userId))
         .for('update')
+      // Checked under the row lock, so a ban applies to requests already in flight
+      if (user?.banned) throw createError({ statusCode: 403, statusMessage: "You've been banned from drawing on the canvas" })
       const placed = changes.slice(0, Math.max(0, user?.pixels ?? 0))
       if (!placed.length) return { placed, balance: user?.pixels ?? 0 }
 

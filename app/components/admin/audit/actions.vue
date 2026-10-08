@@ -57,6 +57,15 @@
             </template>
           </template>
 
+          <template v-else-if="a.action === 'user.canvasBan'">
+            <template v-if="canvasBan(a).banned">
+              banned <UserLink :user="a.target" /> from drawing on the canvas
+            </template>
+            <template v-else>
+              let <UserLink :user="a.target" /> draw on the canvas again
+            </template>
+          </template>
+
           <template v-else-if="a.action === 'user.admin'">
             <template v-if="adminChange(a).isAdmin">
               made <UserLink :user="a.target" /> an admin
@@ -145,6 +154,7 @@ type Details<A extends AdminAction["action"]> = Extract<
 type Entry = { details: AdminAction["details"] };
 // Pixel and bonus point changes have the same details
 const balanceChange = (a: Entry) => a.details as Details<"user.pixels">;
+const canvasBan = (a: Entry) => a.details as Details<"user.canvasBan">;
 const adminChange = (a: Entry) => a.details as Details<"user.admin">;
 const review = (a: Entry) => a.details as Details<"ship.review">;
 const override = (a: Entry) => a.details as Details<"ship.override">;

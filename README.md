@@ -73,3 +73,19 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Docker
+
+`compose.yaml` runs Postgres, applies the migrations, then starts the app:
+
+```bash
+cp .env.example .env   # fill it in, including POSTGRES_PASSWORD, NUXT_SESSION_PASSWORD and TOKEN_ENCRYPTION_KEY
+docker compose up -d --build
+```
+
+The app is on `http://localhost:${APP_PORT:-3000}`. Set `SITE_URL` to the public origin when deploying.
+Run a single copy of the app, the canvas is kept in memory.
+
+Schema changes need a migration for the container: `pnpm db:generate`, and commit the result
+in `server/database/migrations`. The `migrate` service applies them on every `up`. (In development,
+`pnpm db:push` is still fine, but don't run the migrations against a database made with it.)

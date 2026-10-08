@@ -44,6 +44,16 @@
         />
       </label>
     </div>
+    <div class="space-y-1">
+      <label class="flex items-center gap-2">
+        <input v-model="form.showInApp" type="checkbox" class="size-5 accent-black" />
+        <span class="font-semibold">Show in the app carousel</span>
+      </label>
+      <label class="flex items-center gap-2">
+        <input v-model="form.showOnLanding" type="checkbox" class="size-5 accent-black" />
+        <span class="font-semibold">Show in the landing page carousel</span>
+      </label>
+    </div>
     <p v-if="error" class="text-red-600">{{ error }}</p>
     <UiButtonSmall
       type="submit"
@@ -62,6 +72,8 @@ export interface ShopItemForm {
   price: number | "";
   // An empty number input gives "", which means no limit
   stock: number | "" | null;
+  showInApp: boolean;
+  showOnLanding: boolean;
 }
 
 const form = defineModel<ShopItemForm>({ required: true });

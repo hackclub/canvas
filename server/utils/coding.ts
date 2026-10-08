@@ -8,13 +8,15 @@ export const CODING_PIXELS_PER_HOUR = 5
 // progress, and at most once per user per SYNC_INTERVAL (also after a failure, so an outage
 // isn't hit on every page load). Concurrent requests from one user share a single call.
 const SYNC_INTERVAL = 5 * 60 * 1000
-const lastSync = new Map<string, { at: number, total: number | null }>()
-const inFlight = new Map<string, Promise<number | null>>()
+type Totals = Record<string, number>
+const lastSync = new Map<string, { at: number, totals: Totals | null }>()
+const inFlight = new Map<string, Promise<Totals | null>>()
 
-// The user's total Hackatime seconds, or null if it isn't linked or Hackatime can't be reached
-function hackatimeTotal(userId: string): Promise<number | null> {
+// Total seconds of each of the user's Hackatime projects by name, or null if Hackatime
+// isn't linked or can't be reached
+function hackatimeTotals(userId: string): Promise<Totals | null> {
   const cached = lastSync.get(userId)
-  if (cached && Date.now() - cached.at < SYNC_INTERVAL) return Promise.resolve(cached.total)
+  if (cached && Date.now() - cached.at < SYNC_INTERVAL) return Promise.resolve(cached.totals)
 
   let pending = inFlight.get(userId)
   if (!pending) {
@@ -22,12 +24,12 @@ function hackatimeTotal(userId: string): Promise<number | null> {
       .then((projects) => {
         // Not linked, so Hackatime wasn't called and there's nothing to rate limit
         if (!projects) return null
-        const total = projects.reduce((sum, p) => sum + p.total_seconds, 0)
-        lastSync.set(userId, { at: Date.now(), total })
-        return total
+        const totals = Object.fromEntries(projects.map((p) => [p.name, p.total_seconds]))
+        lastSync.set(userId, { at: Date.now(), totals })
+        return totals
       })
       .catch(() => {
-        lastSync.set(userId, { at: Date.now(), total: null })
+        lastSync.set(userId, { at: Date.now(), totals: null })
         return null
       })
       .finally(() => inFlight.delete(userId))
@@ -46,18 +48,20 @@ export interface CodingProgress {
   awarded: number
 }
 
-// Pays pixels for new whole hours of Hackatime time. Only time after the first sync counts
-// (the baseline), so hours logged before Canvas aren't paid. Returns null if Hackatime isn't
-// linked. Safe to call often: the Hackatime call is rate limited per user and the payout
-// is made under a row lock, so hours are never paid twice.
+// Pays pixels for new whole hours of time on Hackatime projects that are linked to one of
+// the user's Canvas projects. Time on other Hackatime projects doesn't count, and neither
+// does what a linked one had when it was first seen (its baseline), so linking an old
+// project doesn't pay for the past. Returns null if Hackatime isn't linked. Safe to call
+// often: the Hackatime call is rate limited per user and the payout is made under a row
+// lock, so hours are never paid twice.
 export async function syncCodingPixels(userId: string): Promise<CodingProgress | null> {
-  const total = await hackatimeTotal(userId)
-  if (total === null) return null
+  const totals = await hackatimeTotals(userId)
+  if (totals === null) return null
 
   return useDB().transaction(async (tx) => {
     const [row] = await tx
       .select({
-        baseline: schema.users.codingBaselineSeconds,
+        baselines: schema.users.codingBaselines,
         paid: schema.users.codingHoursPaid,
         linked: schema.users.hackatimeId,
       })
@@ -66,21 +70,44 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
       .for('update')
     if (!row?.linked) return null
 
-    const progress = (seconds: number, awarded = 0): CodingProgress => ({
-      hoursPaid: row.paid + awarded / CODING_PIXELS_PER_HOUR,
-      secondsIntoHour: seconds % 3600,
-      pixelsPerHour: CODING_PIXELS_PER_HOUR,
-      awarded,
-    })
+    const projects = await tx
+      .select({ hackatimeProjects: schema.projects.hackatimeProjects })
+      .from(schema.projects)
+      .where(eq(schema.projects.userId, userId))
+    const linked = new Set(projects.flatMap((p) => p.hackatimeProjects))
 
-    if (row.baseline === null) {
-      await tx.update(schema.users).set({ codingBaselineSeconds: total }).where(eq(schema.users.id, userId))
-      return progress(0)
+    // Remember where each newly linked project was. Ones that are unlinked later keep theirs,
+    // so relinking doesn't pay again for time already counted.
+    const baselines = { ...row.baselines }
+    let baselinesChanged = false
+    for (const name of linked) {
+      if (name in totals && !(name in baselines)) {
+        baselines[name] = totals[name]!
+        baselinesChanged = true
+      }
+    }
+    if (baselinesChanged) {
+      await tx.update(schema.users).set({ codingBaselines: baselines }).where(eq(schema.users.id, userId))
     }
 
-    const coded = Math.max(0, total - row.baseline)
+    let coded = 0
+    for (const name of linked) {
+      if (name in baselines && name in totals) coded += Math.max(0, totals[name]! - baselines[name]!)
+    }
+
+    const progress = (awarded = 0): CodingProgress => {
+      const paidSeconds = (row.paid + awarded / CODING_PIXELS_PER_HOUR) * 3600
+      return {
+        hoursPaid: paidSeconds / 3600,
+        // Unlinking a project can leave less counted than was paid for, which shows as 0
+        secondsIntoHour: Math.min(3599, Math.max(0, coded - paidSeconds)),
+        pixelsPerHour: CODING_PIXELS_PER_HOUR,
+        awarded,
+      }
+    }
+
     const newHours = Math.floor(coded / 3600) - row.paid
-    if (newHours <= 0) return progress(coded)
+    if (newHours <= 0) return progress()
 
     const pixels = newHours * CODING_PIXELS_PER_HOUR
     const [balances] = await tx
@@ -97,6 +124,6 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
       balance: balances!.pixels,
       reason: 'coding',
     })
-    return progress(coded, pixels)
+    return progress(pixels)
   })
 }

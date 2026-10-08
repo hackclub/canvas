@@ -141,7 +141,7 @@ export default defineEventHandler(async (event) => {
         },
         hackatimeId: me.id,
         // A different account starts pay-as-you-code from scratch (nothing was paid on the old one)
-        ...(switching ? { codingBaselineSeconds: null } : {}),
+        ...(switching ? { codingBaselines: {} } : {}),
       })
       .where(eq(schema.users.id, user.id))
   } catch (error) {

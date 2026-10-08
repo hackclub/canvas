@@ -116,9 +116,19 @@
               class="w-full bg-transparent font-bold text-3xl outline-none border-b-2 border-white/40 focus:border-white"
             />
 
-            <div>
-              <p class="font-bold text-2xl">{{ formatHours(totalSeconds) }}</p>
-              <p class="opacity-70">Total hours</p>
+            <div class="flex flex-wrap gap-x-8 gap-y-3">
+              <div>
+                <p class="font-bold text-2xl">{{ formatHours(totalSeconds) }}</p>
+                <p class="opacity-70">Total hours</p>
+              </div>
+              <div>
+                <p class="font-bold text-2xl">~{{ estimate.pixels }}</p>
+                <p class="opacity-70">Estimated pixels</p>
+              </div>
+              <div>
+                <p class="font-bold text-2xl">~{{ estimate.bonusPoints }}</p>
+                <p class="opacity-70">Estimated bonus points</p>
+              </div>
             </div>
 
             <label class="block">
@@ -369,6 +379,23 @@ const { data: ships } = await useFetch(`/api/projects/${id}/ships`, {
 const latestShip = computed(() => ships.value[0]);
 // Projects can't be changed while they're being reviewed
 const locked = computed(() => latestShip.value?.status === "pending");
+
+// What shipping now would pay, for the time since the last paid ship. A reviewer can
+// change it, e.g. by overriding the hours or marking it as cooking.
+const estimate = computed(() => {
+  const paidSeconds = Math.max(
+    0,
+    ...ships.value
+      .filter((s) => s.pixelsAwarded !== null)
+      .map((s) => s.hackatimeSeconds ?? 0),
+  );
+  const before = projectEarnings(paidSeconds);
+  const now = projectEarnings(totalSeconds.value);
+  return {
+    pixels: Math.max(0, now.pixels - before.pixels),
+    bonusPoints: Math.max(0, now.bonusPoints - before.bonusPoints),
+  };
+});
 
 const shipStatus = {
   pending: {

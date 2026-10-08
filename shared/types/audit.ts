@@ -14,6 +14,7 @@ export type AdminAction =
   | { action: 'user.pixels', details: BalanceChangeDetails }
   | { action: 'user.bonusPoints', details: BalanceChangeDetails }
   | { action: 'user.admin', details: { isAdmin: boolean } }
+  | { action: 'user.canvasBan', details: { banned: boolean } }
   | { action: 'ship.review', details: { shipId: number, status: ShipStatus, feedback: string } }
   | { action: 'ship.override', details: { shipId: number, from: ShipStatus, to: ShipStatus, feedback: string } }
   | { action: 'shop.create', details: { itemId: number, name: string } }

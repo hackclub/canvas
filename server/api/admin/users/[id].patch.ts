@@ -13,6 +13,7 @@ interface Body {
   pixels?: BalanceChange
   bonusPoints?: BalanceChange
   isAdmin?: boolean
+  canvasBanned?: boolean
 }
 
 // The balances admins can change, with how they're named in errors and logged
@@ -25,13 +26,13 @@ function badRequest(statusMessage: string) {
   return createError({ statusCode: 400, statusMessage })
 }
 
-// PATCH /api/admin/users/:id — change a user's pixels, bonus points and/or admin status
+// PATCH /api/admin/users/:id — change a user's pixels, bonus points, admin status and/or canvas ban
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const id = getRouterParam(event, 'id')!
   const body = await readBody<Body>(event)
 
-  const set: { pixels?: number | SQL, bonusPoints?: number | SQL, isAdmin?: boolean } = {}
+  const set: { pixels?: number | SQL, bonusPoints?: number | SQL, isAdmin?: boolean, canvasBanned?: boolean } = {}
   const where = [eq(schema.users.id, id)]
   const changed = BALANCES.filter(({ field }) => body?.[field] !== undefined)
 
@@ -62,12 +63,18 @@ export default defineEventHandler(async (event) => {
     set.isAdmin = body.isAdmin
   }
 
+  if (body?.canvasBanned !== undefined) {
+    if (typeof body.canvasBanned !== 'boolean') throw badRequest('canvasBanned must be true or false')
+    set.canvasBanned = body.canvasBanned
+  }
+
   if (!Object.keys(set).length) throw badRequest('Nothing to change')
 
   const columns = {
     pixels: schema.users.pixels,
     bonusPoints: schema.users.bonusPoints,
     isAdmin: schema.users.isAdmin,
+    canvasBanned: schema.users.canvasBanned,
   }
 
   return useDB().transaction(async (tx) => {
@@ -113,6 +120,12 @@ export default defineEventHandler(async (event) => {
       await logAdminAction(tx, me.id, {
         action: 'user.admin',
         details: { isAdmin: updated.isAdmin },
+      }, { userId: id })
+    }
+    if (updated.canvasBanned !== before.canvasBanned) {
+      await logAdminAction(tx, me.id, {
+        action: 'user.canvasBan',
+        details: { banned: updated.canvasBanned },
       }, { userId: id })
     }
     return updated

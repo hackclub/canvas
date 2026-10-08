@@ -8,7 +8,7 @@
           {{ (shop?.bonusPoints ?? 0).toLocaleString() }} bonus points
         </p>
         <p class="text-sm opacity-70">
-          Get 10 for every hour you spend on a project, once it's shipped and
+          Get 5 for every hour you spend on a project, once it's shipped and
           approved.
         </p>
       </UiCard>
@@ -17,7 +17,10 @@
         {{ notice }}
       </p>
 
-      <div v-if="shop?.items.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        v-if="shop?.items.length"
+        class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
         <article
           v-for="item in shop.items"
           :key="item.id"

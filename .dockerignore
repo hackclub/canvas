@@ -1,0 +1,13 @@
+.git
+.claude
+.zed
+.nuxt
+.output
+.data
+node_modules
+.env
+.env.*
+!.env.example
+*.log
+compose.yaml
+Dockerfile

@@ -134,11 +134,21 @@ const form = ref<ShopItemForm>({
   description: "",
   price: "",
   stock: "",
+  showInApp: true,
+  showOnLanding: false,
 });
 function reset() {
   if (!item.value) return;
-  const { name, description, price, stock } = item.value;
-  form.value = { name, description, price, stock: stock ?? "" };
+  const { name, description, price, stock, showInApp, showOnLanding } =
+    item.value;
+  form.value = {
+    name,
+    description,
+    price,
+    stock: stock ?? "",
+    showInApp,
+    showOnLanding,
+  };
 }
 reset();
 

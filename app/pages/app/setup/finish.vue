@@ -23,9 +23,6 @@
       </UiButtonSmall>
     </form>
     <p v-if="error" class="text-red-600">{{ error }}</p>
-    <p class="opacity-60 italic">
-      <NuxtLink to="/app">skip for now</NuxtLink>
-    </p>
   </div>
   <div v-else class="space-y-2 p-6">
     <h1 class="text-2xl font-bold">all done</h1>
