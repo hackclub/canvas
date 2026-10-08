@@ -1,4 +1,4 @@
-// The signed-in user's pixel balance, shared across components through the "pixels" key.
+// The signed-in user's pixel and bonus point balances, shared across components through the "pixels" key.
 // Call refreshPixels() after anything that changes it.
 export function usePixels() {
   const { data } = useFetch("/api/pixels", { key: "pixels" });
@@ -7,11 +7,14 @@ export function usePixels() {
   const pixels = computed(() =>
     Math.max(0, (data.value?.pixels ?? 0) - pending.value),
   );
+  const bonusPoints = computed(() => data.value?.bonusPoints ?? 0);
   return {
     pixels,
+    bonusPoints,
     pending,
     // For when a response already says what the balance is now
-    setPixels: (value: number) => (data.value = { pixels: value }),
+    setPixels: (value: number) =>
+      (data.value = { bonusPoints: 0, ...data.value, pixels: value }),
     refreshPixels: () => refreshNuxtData("pixels"),
   };
 }

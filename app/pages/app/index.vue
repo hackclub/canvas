@@ -77,35 +77,6 @@
           <span>complete all items for 50 pixels!</span>
         </div>
       </div>
-
-      <div v-if="referrals" class="border-4 border-black p-5 space-y-3">
-        <h2 class="font-bold text-xl">refer a friend</h2>
-        <p class="opacity-70">
-          Get {{ referrals.pixelsPerReferral }} pixels for every friend who
-          signs up with your link and draws on the canvas, for up to
-          {{ referrals.cap }} friends.
-        </p>
-        <div class="flex flex-wrap gap-2">
-          <input
-            :value="referrals.link"
-            readonly
-            aria-label="Your referral link"
-            class="flex-1 min-w-48 border-3 border-black px-3 py-1 outline-none"
-            @focus="($event.target as HTMLInputElement).select()"
-          />
-          <UiButtonSmall
-            :icon="copied ? 'lucide:check' : 'lucide:copy'"
-            @click="copyLink"
-          >
-            {{ copied ? "copied!" : "copy link" }}
-          </UiButtonSmall>
-        </div>
-        <p class="text-sm opacity-70">
-          {{ referrals.signedUp }} signed up · {{ referrals.qualified }} /
-          {{ referrals.cap }} paid out · {{ referrals.pixelsEarned }} pixels
-          earned
-        </p>
-      </div>
     </div>
   </div>
 </template>
@@ -139,15 +110,6 @@ const { user } = useUserSession();
 const { data: projects } = await useFetch("/api/projects");
 const { data: hackatime } = await useFetch("/api/hackatime");
 const { data: progress } = await useFetch("/api/me/progress");
-
-const { data: referrals } = await useFetch("/api/me/referrals");
-const copied = ref(false);
-async function copyLink() {
-  if (!referrals.value) return;
-  await navigator.clipboard.writeText(referrals.value.link);
-  copied.value = true;
-  setTimeout(() => (copied.value = false), 2000);
-}
 
 // Pays for any newly coded hours, so it runs in the browser and updates the balance
 const { refreshPixels } = usePixels();

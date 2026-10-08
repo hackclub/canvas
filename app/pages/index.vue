@@ -52,9 +52,11 @@
       <div class="bg-black text-white pb-24 -mt-10 w-full">
         <div class="flex justify-center pt-35 sm:pt-30 lg:pt-15">
           <div class="w-300 max-w-full px-4 space-y-10">
-            <div class="grid grid-cols-2 gap-4 items-center">
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-4 items-center"
+            >
               <div class="space-y-4">
-                <h1 class="font-bold text-4xl">
+                <h1 class="font-bold text-3xl md:text-4xl">
                   One Canvas, all of Hack Club.
                 </h1>
                 <p class="">
@@ -65,7 +67,8 @@
                 <UiButtonSmall class="border-3 border-white" to="/app">
                   get started :D
                 </UiButtonSmall>
-                <div class="flex justify-end mt-10">
+                <!-- points from the text to the canvas beside it, so it only makes sense side by side -->
+                <div class="hidden md:flex justify-end mt-10">
                   <SvgArrowsCanvasrn :width="350" />
                 </div>
               </div>
@@ -105,8 +108,8 @@
       <div class="flex justify-center">
         <div class="w-300 max-w-full p-4 py-8 space-y-10">
           <div class="text-white">
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-black p-4 space-y-3 max-w-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-black p-4 space-y-3 md:max-w-100">
                 <SvgHackLogo :width="100" />
                 <p>
                   <b>Hack Club</b> is the world's largest nonprofit movement of
@@ -121,8 +124,10 @@
                 </div>
               </div>
               <div class="flex justify-end">
-                <div>
-                  <div class="bg-black p-4 space-y-3 max-w-100">
+                <div class="max-md:w-full">
+                  <div
+                    class="bg-black p-4 space-y-3 max-md:w-full md:max-w-100"
+                  >
                     <p>
                       made with <3 by
                       <NuxtLink to="https://prpl.wtf">emma</NuxtLink> for hack

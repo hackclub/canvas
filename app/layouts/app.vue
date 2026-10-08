@@ -4,42 +4,56 @@
       class="relative flex justify-between items-center max-w-full transition-[width] duration-500 ease-in-out"
       :class="fullWidth ? 'w-full' : 'w-250'"
     >
-      <div class="px-4 py-4 md:px-8 md:py-6">
-        <SvgLogoCompact :width="60" />
-      </div>
-      <div class="absolute left-1/2 -translate-x-1/2 hidden md:block">
-        <div
-          ref="linksEl"
-          class="relative flex gap-2"
-          @mouseleave="hovered = null"
-        >
+      <div class="flex items-center">
+        <div class="px-4 py-4 md:px-8 md:py-6">
+          <SvgLogoCompact :width="60" />
+        </div>
+        <div class="hidden md:block">
           <div
-            class="z-10 absolute top-0 bottom-0 pointer-events-none backdrop-invert"
-            :class="animate ? 'transition-all duration-300 ease-out' : ''"
-            :style="{
-              left: `${indicator.left}px`,
-              width: `${indicator.width}px`,
-              opacity: indicator.width ? 1 : 0,
-            }"
-          />
-          <NuxtLink
-            v-for="link in links"
-            :key="link.to"
-            -
-            :to="link.to"
-            :data-active="link.active"
-            :data-hovered="hovered == link.to"
-            @mouseenter="hovered = link.to"
-            class="relative no-underline! text-lg px-3 py-1 transition-[transform,color] duration-300"
-            >{{ link.label }}</NuxtLink
+            ref="linksEl"
+            class="relative flex gap-2"
+            @mouseleave="hovered = null"
           >
+            <div
+              class="z-10 absolute top-0 bottom-0 pointer-events-none backdrop-invert"
+              :class="animate ? 'transition-all duration-300 ease-out' : ''"
+              :style="{
+                left: `${indicator.left}px`,
+                width: `${indicator.width}px`,
+                opacity: indicator.width ? 1 : 0,
+              }"
+            />
+            <NuxtLink
+              v-for="link in links"
+              :key="link.to"
+              :to="link.to"
+              :data-active="link.active"
+              :data-hovered="hovered == link.to"
+              @mouseenter="hovered = link.to"
+              class="relative no-underline! text-lg px-3 py-1 transition-[transform,color] duration-300"
+              >{{ link.label }}</NuxtLink
+            >
+          </div>
         </div>
       </div>
       <div class="px-4 md:px-8">
-        <div class="text-lg font-semibold bg-black text-white flex items-end">
-          <NuxtImg src="/img/small-pixels.svg" width="36" />
-          <div class="px-2 py-1 flex items-center">
-            <span>{{ pixels }} pixels</span>
+        <div class="flex shrink-0 items-end gap-2">
+          <div class="text-lg font-semibold bg-black text-white flex items-end">
+            <NuxtImg src="/img/small-pixels.svg" width="36" />
+            <div class="px-2 py-1 flex items-center">
+              <span
+                >{{ pixels }}<span class="hidden lg:inline"> pixels</span></span
+              >
+            </div>
+          </div>
+          <div class="text-lg font-semibold bg-black text-white flex items-end">
+            <NuxtImg src="/img/small-points.svg" width="36" />
+            <div class="px-2 ps-0 py-1 flex items-center">
+              <span
+                >{{ bonusPoints
+                }}<span class="hidden lg:inline"> bonus</span></span
+              >
+            </div>
           </div>
         </div>
       </div>
@@ -70,7 +84,7 @@
 <script setup lang="ts">
 const route = useRoute();
 const { user } = useUserSession();
-const { pixels, refreshPixels } = usePixels();
+const { pixels, bonusPoints, refreshPixels } = usePixels();
 
 // Pixels can change without this user doing anything (e.g. an admin gives them some),
 // so re-check on each page change
@@ -87,6 +101,7 @@ const links = computed(() => [
     label: "Projects",
     active: route.path.startsWith("/app/projects"),
   },
+  { to: "/app/shop", label: "Shop", active: route.path == "/app/shop" },
   {
     to: "/app/me",
     label: user.value?.first_name,
