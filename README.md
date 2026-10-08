@@ -76,7 +76,7 @@ Check out the [deployment documentation](https://nuxt.com/docs/getting-started/d
 
 ## Docker
 
-`compose.yaml` runs Postgres, applies the migrations, then starts the app:
+`compose.yaml` runs Postgres and the app, and the app applies any pending migrations when it starts:
 
 ```bash
 cp .env.example .env   # fill it in, including POSTGRES_PASSWORD, NUXT_SESSION_PASSWORD and TOKEN_ENCRYPTION_KEY
@@ -87,5 +87,5 @@ The app is on `http://localhost:${APP_PORT:-3000}`. Set `SITE_URL` to the public
 Run a single copy of the app, the canvas is kept in memory.
 
 Schema changes need a migration for the container: `pnpm db:generate`, and commit the result
-in `server/database/migrations`. The `migrate` service applies them on every `up`. (In development,
+in `server/database/migrations`. The app applies them when it starts (in production only, see `server/plugins/migrate.ts`), and exits if one fails. (In development,
 `pnpm db:push` is still fine, but don't run the migrations against a database made with it.)

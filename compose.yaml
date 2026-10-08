@@ -18,17 +18,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # Applies migrations (server/database/migrations), then exits
-  migrate:
-    build:
-      context: .
-      target: migrate
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-canvas}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-canvas}
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   # Run a single copy: the canvas is kept in memory and streamed to clients from this process
   app:
     build:
@@ -38,9 +27,10 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3000}:3000"
+    # Applies pending migrations when it starts
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
     # Nuxt reads these at runtime (NUXT_ prefix, see runtimeConfig in nuxt.config.ts), since
     # the values in .env aren't available to the built app
     environment:
