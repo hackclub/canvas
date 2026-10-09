@@ -17,7 +17,7 @@ interface MeResponse {
 
 export default defineEventHandler(async (event) => {
   const { hca } = useRuntimeConfig(event)
-  const { code, state, error } = getQuery(event)
+  const { code, state, error, login_hint: loginHint } = getQuery(event)
   const redirectUri = new URL('/auth/hackclub', getRequestURL(event)).href
 
   if (error) {
@@ -42,6 +42,8 @@ export default defineEventHandler(async (event) => {
       scope: SCOPES,
       state,
     })
+    // Prefills the email on the Hack Club Auth login page (e.g. from the landing page input)
+    if (typeof loginHint === 'string' && loginHint.trim()) params.set('login_hint', loginHint.trim().slice(0, 254))
     return sendRedirect(event, `${HCA_URL}/oauth/authorize?${params}`)
   }
 

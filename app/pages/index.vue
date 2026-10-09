@@ -23,14 +23,22 @@
           result gets put up at hack club hq!
         </p>
 
-        <div
+        <form
+          action="/auth/hackclub"
+          method="get"
           class="mt-6 flex items-center border-black border-4 bg-black gap-1"
         >
-          <input placeholder="john@example.com" class="p-3 bg-white" />
-          <UiButton to="/app" icon="lucide:arrow-right" inline
+          <input
+            type="email"
+            name="login_hint"
+            autocomplete="email"
+            placeholder="john@example.com"
+            class="p-3 bg-white"
+          />
+          <UiButton type="submit" icon="lucide:arrow-right" inline
             >let's paint!</UiButton
           >
-        </div>
+        </form>
         <p class="opacity-50">October 8th - October 22nd</p>
         <p class="opacity-50">
           <NuxtLink
