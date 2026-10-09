@@ -34,7 +34,11 @@
     />
     <div
       class="pointer-events-none fixed inset-x-0 z-60 flex justify-center px-3"
-      :class="(current?.position ?? config.position) === 'top' ? 'top-40' : 'bottom-20 md:bottom-6'"
+      :class="
+        (current?.position ?? config.position) === 'top'
+          ? 'top-40'
+          : 'bottom-20 md:bottom-6'
+      "
     >
       <GuideDialogue
         v-if="onPage"
@@ -65,7 +69,7 @@
         v-else
         class="pointer-events-auto"
         :speaker="config.speaker"
-        text="PLACEHOLDER: let's pick up where we left off!"
+        text="let's pick up where we left off!"
       >
         <UiButtonSmall icon="lucide:arrow-right" :to="guide.path.value!">
           take me there
