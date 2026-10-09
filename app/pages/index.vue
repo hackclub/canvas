@@ -39,7 +39,9 @@
             >let's paint!</UiButton
           >
         </form>
-        <p class="opacity-50">October 8th - October 22nd</p>
+        <p class="opacity-50">
+          October 8th - October 22nd. For anyone age 13 to 18!
+        </p>
         <p class="opacity-50">
           <NuxtLink
             to="https://hackclub.enterprise.slack.com/archives/CN271UYS0"
