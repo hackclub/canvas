@@ -1,10 +1,10 @@
 import { sql } from 'drizzle-orm'
 
 // Pixels for creating a first project, once per user (see users.setupRewardedAt)
-const SETUP_REWARD_PIXELS = 1
+const SETUP_REWARD_PIXELS = 3
 
 // POST /api/projects { name } — creates a project; everything else is filled in on its page.
-// `rewarded` is true when this was their first one and they got a pixel for it.
+// `rewarded` is true when this was their first one and they got pixels for it.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const body = await readBody<{ name?: unknown }>(event)

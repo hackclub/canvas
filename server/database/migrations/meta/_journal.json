@@ -50,6 +50,13 @@
       "when": 1791555626877,
       "tag": "0006_demonic_silver_surfer",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791556544982,
+      "tag": "0007_noisy_clint_barton",
+      "breakpoints": true
     }
   ]
 }

@@ -86,3 +86,9 @@ const { reduceMotion, toggleReduceMotion } = useReduceMotion();
   background-size: 700px;
 }
 </style>
+
+<script setup lang="ts">
+useSeoMeta({
+  title: "Welcome to Canvas",
+});
+</script>

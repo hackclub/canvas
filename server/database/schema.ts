@@ -263,6 +263,15 @@ export const dailyActiveLogins = pgTable('daily_active_logins', {
   users: integer('users').notNull(),
 })
 
+// Daily active users (people who coded at least 15 minutes, from user_coding_days) for each UTC
+// day that's over, kept the same way as daily_active_logins: saved the first time a finished
+// day is asked for, and never changed after. The current day is always counted live.
+export const dailyActiveUsers = pgTable('daily_active_users', {
+  // Start of the day (UTC)
+  day: timestamp('day', { withTimezone: true }).primaryKey(),
+  users: integer('users').notNull(),
+})
+
 // How long each user coded on their linked Hackatime projects each UTC day, for the admin
 // graph of daily active users (people who coded at least 15 minutes). Added up from the time
 // each pay-as-you-code sync finds (see syncCodingPixels), so it only knows about days they

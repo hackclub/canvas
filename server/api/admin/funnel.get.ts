@@ -12,6 +12,9 @@ export default defineEventHandler(async (event) => {
       (select count(*) from users where hackatime is not null)::int as hackatime,
       (select count(*) from users where setup_rewarded_at is not null
         or exists (select 1 from projects where projects.user_id = users.id))::int as project,
+      (select count(*) from (
+        select user_id from user_coding_days group by user_id having sum(seconds) >= ${ACTIVE_CODING_SECONDS}
+      ) coders)::int as coded,
       (select count(distinct user_id) from pixel_transactions where reason = 'canvas')::int as drawn,
       (select count(distinct projects.user_id) from ships join projects on projects.id = ships.project_id)::int as shipped
   `)
@@ -21,6 +24,7 @@ export default defineEventHandler(async (event) => {
       { key: 'eligible', label: 'verified & eligible', users: row!.eligible },
       { key: 'hackatime', label: 'linked Hackatime', users: row!.hackatime },
       { key: 'project', label: 'created a project', users: row!.project },
+      { key: 'coded', label: 'coded at least 15 minutes', users: row!.coded },
       { key: 'drawn', label: 'drew on the canvas', users: row!.drawn },
       { key: 'shipped', label: 'shipped a project', users: row!.shipped },
     ],

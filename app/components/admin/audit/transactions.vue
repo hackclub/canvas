@@ -48,7 +48,7 @@
               — got pixels for someone they referred</template
             >
             <template v-else-if="t.reason === 'setup'">
-              — got a pixel for creating their first project</template
+              — got pixels for creating their first project</template
             >
             <template v-else-if="t.reason === 'ship'">
               — paid for shipping

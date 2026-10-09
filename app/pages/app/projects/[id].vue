@@ -80,7 +80,7 @@
           v-if="route.query.rewarded"
           class="mt-4 border-2 border-white px-4 py-3 font-bold"
         >
-          You got 1 pixel for creating your first project!
+          You got 3 pixels for creating your first project!
         </p>
 
         <!-- pixels are only paid for time on Hackatime projects linked to a project -->

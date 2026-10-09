@@ -31,10 +31,18 @@ export async function recordActivity(userId: string) {
 
 const DAY = 24 * HOUR
 
-// Active logins for each UTC day from `start` up to `end` (both day starts, in ms), as rows
-// like the hourly ones. Days that are over come from daily_active_users, and the ones that
-// aren't in it yet are counted (together, in one query) and saved. Today is counted every time.
-async function getDailyActiveLogins(start: number, end: number) {
+type DailyCache = typeof schema.dailyActiveLogins | typeof schema.dailyActiveUsers
+
+// A count for each UTC day from `start` up to `end` (both day starts, in ms), as rows like the
+// hourly ones. Days that are over come from `cache` (daily_active_logins or daily_active_users),
+// and the ones that aren't in it yet are counted (together, by `countDays`, which gets the first
+// day to count from and returns a count per day start) and saved. Today is counted every time.
+async function getCachedDaily(
+  cache: DailyCache,
+  start: number,
+  end: number,
+  countDays: (from: number) => Promise<Map<number, number>>,
+) {
   const db = useDB()
   const todayStart = Math.floor(Date.now() / DAY) * DAY
   const days: number[] = []
@@ -42,24 +50,14 @@ async function getDailyActiveLogins(start: number, end: number) {
 
   const pastEnd = Math.min(end, todayStart)
   const cached = pastEnd > start
-    ? await db.select().from(schema.dailyActiveLogins)
-        .where(and(gte(schema.dailyActiveLogins.day, new Date(start)), lt(schema.dailyActiveLogins.day, new Date(pastEnd))))
+    ? await db.select().from(cache).where(and(gte(cache.day, new Date(start)), lt(cache.day, new Date(pastEnd))))
     : []
   const counts = new Map(cached.map((r) => [r.day.getTime(), r.users]))
 
   // Everything not cached: past days that were never saved, and today
   const uncounted = days.filter((t) => !counts.has(t))
   if (uncounted.length) {
-    const from = uncounted[0]!
-    const rows = await db
-      .select({
-        day: sql<Date>`date_trunc('day', ${schema.userActivity.hour} at time zone 'UTC') at time zone 'UTC'`.mapWith((v) => new Date(v)),
-        users: sql<number>`count(distinct ${schema.userActivity.userId})::int`,
-      })
-      .from(schema.userActivity)
-      .where(and(gte(schema.userActivity.hour, new Date(from)), lt(schema.userActivity.hour, new Date(end))))
-      .groupBy(sql`1`)
-    const byDay = new Map(rows.map((r) => [new Date(r.day).getTime(), r.users]))
+    const byDay = await countDays(uncounted[0]!)
 
     const toSave: { day: Date, users: number }[] = []
     for (const t of uncounted) {
@@ -69,13 +67,42 @@ async function getDailyActiveLogins(start: number, end: number) {
       if (t < todayStart) toSave.push({ day: new Date(t), users })
     }
     if (toSave.length) {
-      await db.insert(schema.dailyActiveLogins).values(toSave).onConflictDoNothing()
-        .catch((e) => console.error('Failed to save daily active logins', e))
+      await db.insert(cache).values(toSave).onConflictDoNothing()
+        .catch((e) => console.error('Failed to save daily active counts', e))
     }
   }
 
   return days.map((t) => ({ at: new Date(t), users: counts.get(t) ?? 0 }))
 }
+
+const dayOf = (column: typeof schema.userActivity.hour | typeof schema.userCodingDays.day) =>
+  sql<Date>`date_trunc('day', ${column} at time zone 'UTC') at time zone 'UTC'`.mapWith((v) => new Date(v))
+
+// Active logins: people who made any request, from the hourly activity rows
+const getDailyActiveLogins = (start: number, end: number) =>
+  getCachedDaily(schema.dailyActiveLogins, start, end, async (from) => {
+    const rows = await useDB()
+      .select({ day: dayOf(schema.userActivity.hour), users: sql<number>`count(distinct ${schema.userActivity.userId})::int` })
+      .from(schema.userActivity)
+      .where(and(gte(schema.userActivity.hour, new Date(from)), lt(schema.userActivity.hour, new Date(end))))
+      .groupBy(sql`1`)
+    return new Map(rows.map((r) => [new Date(r.day).getTime(), r.users]))
+  })
+
+// Active users: people who coded at least ACTIVE_CODING_SECONDS, from the coding log
+const getDailyActiveUsers = (start: number, end: number) =>
+  getCachedDaily(schema.dailyActiveUsers, start, end, async (from) => {
+    const rows = await useDB()
+      .select({ day: dayOf(schema.userCodingDays.day), users: sql<number>`count(*)::int` })
+      .from(schema.userCodingDays)
+      .where(and(
+        gte(schema.userCodingDays.day, new Date(from)),
+        lt(schema.userCodingDays.day, new Date(end)),
+        gte(schema.userCodingDays.seconds, ACTIVE_CODING_SECONDS),
+      ))
+      .groupBy(sql`1`)
+    return new Map(rows.map((r) => [new Date(r.day).getTime(), r.users]))
+  })
 
 export const ACTIVITY_MAX_DAYS = 60
 
@@ -124,15 +151,7 @@ export async function getActivity(from: Date, to: Date) {
       .where(range)
       .groupBy(schema.userActivity.hour),
     getDailyActiveLogins(start, end),
-    useDB()
-      .select({ at: schema.userCodingDays.day, users: sql<number>`count(*)::int` })
-      .from(schema.userCodingDays)
-      .where(and(
-        gte(schema.userCodingDays.day, new Date(start)),
-        lt(schema.userCodingDays.day, new Date(end)),
-        gte(schema.userCodingDays.seconds, ACTIVE_CODING_SECONDS),
-      ))
-      .groupBy(schema.userCodingDays.day),
+    getDailyActiveUsers(start, end),
     useDB().select({ count: sql<number>`count(*)::int` }).from(schema.users),
   ])
 

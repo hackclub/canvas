@@ -86,6 +86,10 @@ const route = useRoute();
 const { user } = useUserSession();
 const { pixels, bonusPoints, refreshPixels } = usePixels();
 
+useSeoMeta({
+  title: "Canvas",
+});
+
 // Pixels can change without this user doing anything (e.g. an admin gives them some),
 // so re-check on each page change
 watch(() => route.path, refreshPixels);

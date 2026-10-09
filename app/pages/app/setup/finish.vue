@@ -3,7 +3,7 @@
     <h1 class="text-2xl font-bold">make your first project</h1>
     <p class="mb-3">
       Everything you build in Canvas lives in a project. Name yours, you can
-      change it and fill in the rest later. You'll get a pixel for it!
+      change it and fill in the rest later. You'll get 3 pixels for it!
     </p>
     <form class="flex flex-wrap gap-2" @submit.prevent="create">
       <input
