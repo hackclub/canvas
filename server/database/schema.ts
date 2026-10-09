@@ -99,6 +99,10 @@ export const projects = pgTable('projects', {
   repoUrl: text('repo_url'),
   // R2 object key of the banner image, served at /images/<key>
   bannerKey: text('banner_key'),
+  // The owner's Hackatime user ID (users.hackatimeId), copied here so the project can be
+  // joined to Hackatime data outside Canvas. Kept in sync when they link Hackatime and when
+  // a project is made. Never sent to the browser: use projectColumns / `hackatimeId: false`.
+  hackatimeId: integer('hackatime_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('projects_user_id_idx').on(t.userId)])

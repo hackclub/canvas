@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     .update(schema.projects)
     .set({ bannerKey: null, updatedAt: new Date() })
     .where(eq(schema.projects.id, project.id))
-    .returning()
+    .returning(projectColumns)
 
   if (project.bannerKey) {
     await deleteR2Object(project.bannerKey).catch((error) => console.error('Failed to delete banner:', error))

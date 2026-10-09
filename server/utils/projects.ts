@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { and, eq, getTableColumns, isNotNull } from 'drizzle-orm'
 
 type DB = ReturnType<typeof useDB>
 type Tx = Parameters<Parameters<DB['transaction']>[0]>[0]
@@ -8,6 +8,11 @@ const MAX_NAME_LENGTH = 100
 const MAX_TEXT_LENGTH = 5000
 const MAX_HACKATIME_PROJECTS = 100
 const MAX_HACKATIME_NAME_LENGTH = 255
+
+// Every project column except the owner's Hackatime ID, which is only for use outside
+// Canvas. Use this for any select or returning() that goes back to the browser.
+const { hackatimeId: _hackatimeId, ...projectColumns } = getTableColumns(schema.projects)
+export { projectColumns }
 
 function badRequest(statusMessage: string) {
   return createError({ statusCode: 400, statusMessage })
@@ -19,6 +24,7 @@ export async function requireOwnProject(event: H3Event, userId: string) {
   const project = Number.isSafeInteger(id)
     ? await useDB().query.projects.findFirst({
         where: and(eq(schema.projects.id, id), eq(schema.projects.userId, userId)),
+        columns: { hackatimeId: false },
       })
     : undefined
   if (!project) {

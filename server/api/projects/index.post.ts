@@ -13,7 +13,12 @@ export default defineEventHandler(async (event) => {
   const result = await useDB().transaction(async (tx) => {
     const [project] = await tx
       .insert(schema.projects)
-      .values({ userId: user.id, name })
+      // The owner's Hackatime ID, if they've linked Hackatime yet
+      .values({
+        userId: user.id,
+        name,
+        hackatimeId: sql`(select ${schema.users.hackatimeId} from ${schema.users} where ${schema.users.id} = ${user.id})`,
+      })
       .returning({ id: schema.projects.id })
 
     // Only the request that sets setupRewardedAt gets the pixel, so parallel requests can't

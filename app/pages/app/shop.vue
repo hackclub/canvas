@@ -53,7 +53,7 @@
           </div>
         </article>
         <article
-          class="flex flex-col items-center justify-center text-center border-4 border-black"
+          class="flex flex-col items-center justify-center text-center border-4 border-black p-4"
         >
           <Icon name="lucide:shopping-cart" :size="48" />
           <p class="font-bold mt-3">More items coming soon..</p>

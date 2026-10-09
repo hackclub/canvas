@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-2 p-6">
     <h1 class="text-2xl font-bold">
-      hi {{ user?.first_name?.toLowerCase() || "" }}, welcome to canvas!
+      hi {{ displayName.toLowerCase() }}, welcome to canvas!
     </h1>
     <p class="mb-3">
       One large canvas. Build projects to place pixels. Work together to make
@@ -18,5 +18,5 @@ definePageMeta({
   layout: "setup",
 });
 
-const { user } = useUserSession();
+const displayName = useDisplayName();
 </script>

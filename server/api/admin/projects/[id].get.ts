@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const [row] = Number.isSafeInteger(id)
     ? await useDB()
         .select({
-          project: schema.projects,
+          project: projectColumns,
           owner: {
             id: schema.users.id,
             identity: schema.users.identity,

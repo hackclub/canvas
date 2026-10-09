@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
       .update(schema.projects)
       .set({ ...update, updatedAt: new Date() })
       .where(eq(schema.projects.id, project.id))
-      .returning()
+      .returning(projectColumns)
     return updated
   })
 })

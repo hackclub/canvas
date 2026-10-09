@@ -149,6 +149,11 @@ export default defineEventHandler(async (event) => {
     if (isUniqueViolation(error)) throw alreadyLinked()
     throw error
   }
+  // Their projects carry their Hackatime ID too (see schema.projects.hackatimeId)
+  await db
+    .update(schema.projects)
+    .set({ hackatimeId: me.id })
+    .where(eq(schema.projects.userId, user.id))
 
   return sendRedirect(event, returnPage)
 })
