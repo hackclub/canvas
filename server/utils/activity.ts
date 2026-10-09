@@ -31,10 +31,10 @@ export async function recordActivity(userId: string) {
 
 const DAY = 24 * HOUR
 
-// Active users for each UTC day from `start` up to `end` (both day starts, in ms), as rows
+// Active logins for each UTC day from `start` up to `end` (both day starts, in ms), as rows
 // like the hourly ones. Days that are over come from daily_active_users, and the ones that
 // aren't in it yet are counted (together, in one query) and saved. Today is counted every time.
-async function getDailyActiveUsers(start: number, end: number) {
+async function getDailyActiveLogins(start: number, end: number) {
   const db = useDB()
   const todayStart = Math.floor(Date.now() / DAY) * DAY
   const days: number[] = []
@@ -42,8 +42,8 @@ async function getDailyActiveUsers(start: number, end: number) {
 
   const pastEnd = Math.min(end, todayStart)
   const cached = pastEnd > start
-    ? await db.select().from(schema.dailyActiveUsers)
-        .where(and(gte(schema.dailyActiveUsers.day, new Date(start)), lt(schema.dailyActiveUsers.day, new Date(pastEnd))))
+    ? await db.select().from(schema.dailyActiveLogins)
+        .where(and(gte(schema.dailyActiveLogins.day, new Date(start)), lt(schema.dailyActiveLogins.day, new Date(pastEnd))))
     : []
   const counts = new Map(cached.map((r) => [r.day.getTime(), r.users]))
 
@@ -69,8 +69,8 @@ async function getDailyActiveUsers(start: number, end: number) {
       if (t < todayStart) toSave.push({ day: new Date(t), users })
     }
     if (toSave.length) {
-      await db.insert(schema.dailyActiveUsers).values(toSave).onConflictDoNothing()
-        .catch((e) => console.error('Failed to save daily active users', e))
+      await db.insert(schema.dailyActiveLogins).values(toSave).onConflictDoNothing()
+        .catch((e) => console.error('Failed to save daily active logins', e))
     }
   }
 
@@ -103,14 +103,18 @@ export function parseActivityRange(event: import('h3').H3Event) {
   return { from, to }
 }
 
-// Active users per UTC day and per hour between `from` and `to` (inclusive days), with
+// Time on linked Hackatime projects in a day for someone to count as an active user
+export const ACTIVE_CODING_SECONDS = 15 * 60
+
+// Active logins per UTC day and per hour, and active users (people who coded at least
+// ACTIVE_CODING_SECONDS that day, see userCodingDays) per UTC day, between `from` and `to` (inclusive days), with
 // empty buckets filled in as zero
 export async function getActivity(from: Date, to: Date) {
   const start = from.getTime()
   const end = to.getTime() + 24 * HOUR
   const range = and(gte(schema.userActivity.hour, new Date(start)), lt(schema.userActivity.hour, new Date(end)))
 
-  const [hourly, daily, [total]] = await Promise.all([
+  const [hourly, daily, coders, [total]] = await Promise.all([
     useDB()
       .select({
         at: schema.userActivity.hour,
@@ -119,7 +123,16 @@ export async function getActivity(from: Date, to: Date) {
       .from(schema.userActivity)
       .where(range)
       .groupBy(schema.userActivity.hour),
-    getDailyActiveUsers(start, end),
+    getDailyActiveLogins(start, end),
+    useDB()
+      .select({ at: schema.userCodingDays.day, users: sql<number>`count(*)::int` })
+      .from(schema.userCodingDays)
+      .where(and(
+        gte(schema.userCodingDays.day, new Date(start)),
+        lt(schema.userCodingDays.day, new Date(end)),
+        gte(schema.userCodingDays.seconds, ACTIVE_CODING_SECONDS),
+      ))
+      .groupBy(schema.userCodingDays.day),
     useDB().select({ count: sql<number>`count(*)::int` }).from(schema.users),
   ])
 
@@ -135,6 +148,7 @@ export async function getActivity(from: Date, to: Date) {
   return {
     totalUsers: total!.count,
     daily: fill(daily, 24 * HOUR),
+    dailyActive: fill(coders, 24 * HOUR),
     hourly: fill(hourly, HOUR),
   }
 }

@@ -10,7 +10,7 @@
         </NuxtLink>
         <h1 class="mt-2 font-bold text-3xl">activity</h1>
         <p class="mt-1 opacity-70">
-          Users who made a request, by UTC day and hour
+          Logins, and people who coded, by UTC day and hour
         </p>
       </UiCard>
 
@@ -41,12 +41,29 @@
         </dl>
 
         <div class="border-4 border-black p-5">
-          <h2 class="font-bold text-xl mb-3">daily active users</h2>
+          <h2 class="font-bold text-xl">daily active users</h2>
+          <p class="text-sm opacity-70 mb-3">
+            People who coded at least 15 minutes on their linked Hackatime
+            projects that day. Counted when they open Canvas, so it only has
+            days since this was added, and a day's time lands on the day we
+            noticed it.
+          </p>
+          <AdminBarChart :points="asValues(data.dailyActive)" />
+        </div>
+
+        <div class="border-4 border-black p-5">
+          <h2 class="font-bold text-xl">daily active logins</h2>
+          <p class="text-sm opacity-70 mb-3">
+            People who made any request that day.
+          </p>
           <AdminBarChart :points="asValues(data.daily)" />
         </div>
 
         <div class="border-4 border-black p-5">
-          <h2 class="font-bold text-xl mb-3">hourly active users</h2>
+          <h2 class="font-bold text-xl">hourly active logins</h2>
+          <p class="text-sm opacity-70 mb-3">
+            People who made any request that hour.
+          </p>
           <AdminBarChart :points="asValues(data.hourly)" hourly />
         </div>
 

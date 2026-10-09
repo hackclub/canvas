@@ -71,6 +71,9 @@ export const users = pgTable('users', {
   // Seconds on the Hackatime projects linked to their projects (since HACKATIME_START) the
   // last time pay-as-you-code looked, for the admin graphs' unshipped hours
   linkedSecondsSeen: integer('linked_seconds_seen').notNull().default(0),
+  // Seconds on each linked Hackatime project when pay-as-you-code last looked, to work out how
+  // much time came in since (see userCodingDays)
+  codingSeen: jsonb('coding_seen').$type<Record<string, number>>().notNull().default({}),
   // Pixels currency balance, spent on the canvas
   pixels: integer('pixels').notNull().default(0),
   // Bonus points currency balance, spent in the shop
@@ -250,11 +253,26 @@ export const statSnapshots = pgTable('stat_snapshots', {
   unshippedSeconds: integer('unshipped_seconds').notNull(),
 })
 
-// Daily active users for each UTC day that's over, so the admin graphs don't count the hourly
-// rows again every time. A day is saved the first time it's asked for after it ends, and then
-// never changes (even if a user is deleted later), the current day is always counted live.
-export const dailyActiveUsers = pgTable('daily_active_users', {
+// Daily active logins (people who made a request, whatever they did) for each UTC day that's
+// over, so the admin graphs don't count the hourly rows again every time. A day is saved the
+// first time it's asked for after it ends, and then never changes (even if a user is deleted
+// later), the current day is always counted live.
+export const dailyActiveLogins = pgTable('daily_active_logins', {
   // Start of the day (UTC)
   day: timestamp('day', { withTimezone: true }).primaryKey(),
   users: integer('users').notNull(),
 })
+
+// How long each user coded on their linked Hackatime projects each UTC day, for the admin
+// graph of daily active users (people who coded at least 15 minutes). Added up from the time
+// each pay-as-you-code sync finds (see syncCodingPixels), so it only knows about days they
+// opened Canvas and the time lands on the day it was noticed.
+export const userCodingDays = pgTable('user_coding_days', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // Start of the day (UTC)
+  day: timestamp('day', { withTimezone: true }).notNull(),
+  seconds: integer('seconds').notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.day] }),
+  index('user_coding_days_day_idx').on(t.day),
+])

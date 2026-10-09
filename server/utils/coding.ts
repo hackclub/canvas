@@ -62,6 +62,7 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
     const [row] = await tx
       .select({
         baselines: schema.users.codingBaselines,
+        seen: schema.users.codingSeen,
         paid: schema.users.codingHoursPaid,
         linked: schema.users.hackatimeId,
       })
@@ -96,7 +97,28 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
       if (name in totals) linkedSeconds += totals[name]!
       if (name in baselines && name in totals) coded += Math.max(0, totals[name]! - baselines[name]!)
     }
-    await tx.update(schema.users).set({ linkedSecondsSeen: Math.round(linkedSeconds) }).where(eq(schema.users.id, userId))
+
+    // Time that came in since the last look, on projects that were already linked then (a
+    // newly linked project's earlier time isn't today's), goes on today's coding log
+    const seen: Record<string, number> = {}
+    let newSeconds = 0
+    for (const name of linked) {
+      if (!(name in totals)) continue
+      seen[name] = totals[name]!
+      if (name in row.seen) newSeconds += Math.max(0, totals[name]! - row.seen[name]!)
+    }
+    await tx.update(schema.users)
+      .set({ linkedSecondsSeen: Math.round(linkedSeconds), codingSeen: seen })
+      .where(eq(schema.users.id, userId))
+    if (newSeconds >= 1) {
+      const day = new Date(Math.floor(Date.now() / 86_400_000) * 86_400_000)
+      await tx.insert(schema.userCodingDays)
+        .values({ userId, day, seconds: Math.round(newSeconds) })
+        .onConflictDoUpdate({
+          target: [schema.userCodingDays.userId, schema.userCodingDays.day],
+          set: { seconds: sql`${schema.userCodingDays.seconds} + ${Math.round(newSeconds)}` },
+        })
+    }
 
     const progress = (awarded = 0): CodingProgress => {
       const paidSeconds = (row.paid + awarded / CODING_PIXELS_PER_HOUR) * 3600

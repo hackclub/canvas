@@ -43,6 +43,13 @@
       "when": 1791502899712,
       "tag": "0005_bright_tempest",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791555626877,
+      "tag": "0006_demonic_silver_surfer",
+      "breakpoints": true
     }
   ]
 }
