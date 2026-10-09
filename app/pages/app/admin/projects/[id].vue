@@ -170,6 +170,8 @@
           </p>
         </div>
       </div>
+
+      <AdminNotes :project-id="project.id" />
     </div>
   </div>
 

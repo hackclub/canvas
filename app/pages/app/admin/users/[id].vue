@@ -50,6 +50,8 @@
         </div>
         <p v-else class="opacity-60 italic">No projects yet.</p>
       </div>
+
+      <AdminNotes :user-id="u.id" />
     </div>
   </div>
 

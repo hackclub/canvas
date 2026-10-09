@@ -28,6 +28,7 @@
               :key="link.to"
               :to="link.to"
               :data-active="link.active"
+              :data-guide="link.to == '/app/canvas' ? 'canvas-link' : undefined"
               :data-hovered="hovered == link.to"
               @mouseenter="hovered = link.to"
               class="relative no-underline! text-lg px-3 py-1 transition-[transform,color] duration-300"
@@ -69,6 +70,7 @@
       v-for="link in links"
       :key="link.to"
       :to="link.to"
+      :data-guide="link.to == '/app/canvas' ? 'canvas-link' : undefined"
       class="no-underline! shrink-0 whitespace-nowrap text-lg px-3 py-1"
       :class="link.active ? 'bg-black text-white' : ''"
       >{{ link.label }}</NuxtLink
@@ -79,11 +81,14 @@
     <slot />
   </div>
   <AdminBar />
+  <ClientOnly><GuideOverlay /></ClientOnly>
 </template>
 
 <script setup lang="ts">
 const route = useRoute();
-const { user } = useUserSession();
+const displayName = useDisplayName();
+const truncate = (text: string, max: number) =>
+  text.length > max ? `${text.slice(0, max)}…` : text;
 const { pixels, bonusPoints, refreshPixels } = usePixels();
 
 useSeoMeta({
@@ -108,7 +113,7 @@ const links = computed(() => [
   { to: "/app/shop", label: "Shop", active: route.path == "/app/shop" },
   {
     to: "/app/me",
-    label: user.value?.first_name,
+    label: `@${truncate(displayName.value, 15)}`,
     active: route.path == "/app/me",
   },
 ]);

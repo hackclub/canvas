@@ -12,6 +12,8 @@ export function usePixels() {
     pixels,
     bonusPoints,
     pending,
+    // Whether the balance has come back from the server yet
+    loaded: computed(() => !!data.value),
     // For when a response already says what the balance is now
     setPixels: (value: number) =>
       (data.value = { bonusPoints: 0, ...data.value, pixels: value }),

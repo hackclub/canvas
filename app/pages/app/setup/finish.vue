@@ -31,6 +31,7 @@ definePageMeta({
   layout: "setup",
 });
 
+const guide = useGuide();
 const name = ref("");
 const saving = ref(false);
 const error = ref("");
@@ -43,11 +44,9 @@ async function create() {
       method: "POST",
       body: { name: name.value },
     });
+    guide.start(created.id);
     // Straight into the project, where they're asked to link their Hackatime projects
-    await navigateTo({
-      path: `/app/projects/${created.id}`,
-      query: created.rewarded ? { rewarded: "1" } : {},
-    });
+    await navigateTo(`/app/projects/${created.id}`);
   } catch (e) {
     error.value =
       (e as { data?: { message?: string } }).data?.message ??

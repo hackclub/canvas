@@ -57,6 +57,13 @@
       "when": 1791556544982,
       "tag": "0007_noisy_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791574262182,
+      "tag": "0008_small_excalibur",
+      "breakpoints": true
     }
   ]
 }

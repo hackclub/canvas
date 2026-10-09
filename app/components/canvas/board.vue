@@ -61,10 +61,10 @@
             target="_blank"
             class="font-bold"
           >
-            {{ inspected.info.name ?? "a Hack Clubber" }}
+            {{ inspected.info.name ? `@${inspected.info.name}` : "a Hack Clubber" }}
           </NuxtLink>
           <span v-else class="font-bold">{{
-            inspected.info.name ?? "a Hack Clubber"
+            inspected.info.name ? `@${inspected.info.name}` : "a Hack Clubber"
           }}</span>
         </p>
         <p class="opacity-60">
@@ -92,7 +92,10 @@
         {{ error }}
       </p>
       <template v-if="editing">
-        <div class="flex gap-2 border-4 border-black bg-white p-2">
+        <div
+          data-guide="palette"
+          class="flex gap-2 border-4 border-black bg-white p-2"
+        >
           <button
             v-for="(color, i) in CANVAS_COLORS"
             :key="color"
@@ -148,6 +151,7 @@
             {{ draftSize ? "discard" : "done" }}
           </UiButtonBasic>
           <UiButtonSmall
+            data-guide="confirm"
             icon="lucide:check"
             :disabled="!draftSize"
             class="disabled:cursor-default disabled:opacity-40"
@@ -157,7 +161,12 @@
           </UiButtonSmall>
         </div>
       </template>
-      <UiButtonSmall v-else icon="lucide:pencil" @click="editing = true">
+      <UiButtonSmall
+        v-else
+        data-guide="draw"
+        icon="lucide:pencil"
+        @click="editing = true"
+      >
         draw
       </UiButtonSmall>
       <p class="bg-white/80 px-2 text-xs opacity-70">
@@ -177,6 +186,7 @@ import { NuxtLink } from "#components";
 const MAX_SCALE = 64;
 
 const { pixels, pending, setPixels } = usePixels();
+const guide = useGuide();
 
 const viewportEl = ref<HTMLDivElement>();
 const screenEl = ref<HTMLCanvasElement>();
@@ -186,6 +196,8 @@ const error = ref("");
 const editing = ref(false);
 // A palette index, or the eraser (which takes pixels back out of the draft)
 const tool = ref<number | "eraser">(0);
+watch(editing, (on) => on && guide.signal("draw"));
+watch(tool, () => guide.signal("color"));
 const draftSize = ref(0);
 const canUndo = ref(false);
 const canRedo = ref(false);
@@ -468,9 +480,11 @@ async function send() {
   for (const [i, color] of inflight) {
     if (!rejected.has(i)) setConfirmed(i, color);
   }
+  const placed = !failed && rejected.size < inflight.size;
   inflight.clear();
   for (const i of rejected) drawPixel(i, shownColor(i));
   updatePending();
+  if (placed) guide.painted();
   if (queued.size) send();
 }
 

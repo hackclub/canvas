@@ -76,13 +76,6 @@
 
         <p v-if="bannerError" class="mt-2 text-red-400">{{ bannerError }}</p>
 
-        <p
-          v-if="route.query.rewarded"
-          class="mt-4 border-2 border-white px-4 py-3 font-bold"
-        >
-          You got 3 pixels for creating your first project!
-        </p>
-
         <!-- pixels are only paid for time on Hackatime projects linked to a project -->
         <div
           v-if="!project.hackatimeProjects.length && !locked"
@@ -141,7 +134,7 @@
               class="w-full bg-transparent font-bold text-3xl outline-none border-b-2 border-white/40 focus:border-white"
             />
 
-            <div class="flex flex-wrap gap-x-8 gap-y-3">
+            <div class="flex flex-wrap gap-x-8 gap-y-3" data-guide="estimates">
               <div>
                 <p class="font-bold text-2xl">
                   {{ formatHours(totalSeconds) }}
@@ -168,7 +161,10 @@
               />
             </label>
 
-            <div id="hackatime-projects">
+            <div
+              id="hackatime-projects"
+              :data-guide="guideSave ? undefined : 'hackatime'"
+            >
               <p class="font-semibold">Hackatime projects</p>
               <p class="text-sm opacity-70">
                 Time from these Hackatime projects counts towards this project.
@@ -273,6 +269,7 @@
           <div v-if="!locked" class="flex flex-wrap gap-2">
             <UiButtonSmall
               type="submit"
+              :data-guide="guideSave ? 'save' : undefined"
               class="border-3 border-white disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="!dirty || saving"
             >
@@ -465,9 +462,22 @@ function toForm(p: ProjectData) {
 }
 
 const form = reactive(toForm(project.value!));
+
 const dirty = computed(
   () => JSON.stringify(form) !== JSON.stringify(toForm(project.value!)),
 );
+
+// The guide points at the Hackatime picker, then at the save button once they've picked
+// something that isn't saved yet, and moves on when they save with a project linked
+const guide = useGuide();
+// For "<project name>" in the guide's dialogue
+const guideProjectName = useState<string | null>("guide-project-name", () => null);
+watchEffect(() => (guideProjectName.value = project.value?.name ?? null));
+onBeforeUnmount(() => (guideProjectName.value = null));
+const guideSave = computed(
+  () => !!form.hackatimeProjects.length && dirty.value,
+);
+watch(guideSave, (picked) => guide.signal(picked ? "linked" : "unlinked"));
 
 function reset() {
   Object.assign(form, toForm(project.value!));
@@ -528,6 +538,9 @@ async function save() {
     });
     project.value = updated as ProjectData;
     reset();
+    if (project.value!.hackatimeProjects.length && guide.step.value === "link") {
+      guide.go("finalize");
+    }
   } catch (e) {
     error.value = errorMessage(e);
   } finally {

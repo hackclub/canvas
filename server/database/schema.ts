@@ -234,6 +234,21 @@ export const adminActions = pgTable('admin_actions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('admin_actions_created_at_idx').on(t.createdAt)])
 
+// Internal notes admins leave on a user or a project, only ever shown in the admin panel.
+// A table of their own (rather than a column) so routes that return a whole project or user
+// row to its owner can't leak them. Each note is on exactly one of a user or a project.
+export const adminNotes = pgTable('admin_notes', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  authorId: text('author_id').references(() => users.id, { onDelete: 'set null' }),
+  body: text('body').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('admin_notes_user_id_idx').on(t.userId),
+  index('admin_notes_project_id_idx').on(t.projectId),
+])
+
 // One row per user per hour they made an authenticated request, for the admin activity graphs.
 // Daily active users are counted from these (and kept in daily_active_users once a day is over).
 export const userActivity = pgTable('user_activity', {

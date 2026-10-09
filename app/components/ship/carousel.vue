@@ -47,9 +47,9 @@
               external
               target="_blank"
             >
-              {{ ship.ownerName ?? "a Hack Clubber" }}
+              {{ ship.ownerName ? `@${ship.ownerName}` : "a Hack Clubber" }}
             </NuxtLink>
-            <template v-else>{{ ship.ownerName ?? "a Hack Clubber" }}</template>
+            <template v-else>{{ ship.ownerName ? `@${ship.ownerName}` : "a Hack Clubber" }}</template>
           </p>
           <p class="mt-1 mb-4 opacity-70 line-clamp-3">
             {{ ship.description }}

@@ -48,7 +48,7 @@
           This is the name other people see, like on your shipped projects.
           {{
             names?.slackDisplayName
-              ? `By default it's your Slack display name, "${names.slackDisplayName}".`
+              ? `By default it's your Slack display name, "@${names.slackDisplayName}".`
               : "You don't have a Slack display name, so you'll show up as \"a Hack Clubber\" unless you set one here."
           }}
         </p>
@@ -117,7 +117,9 @@ definePageMeta({
 const { clear } = useUserSession();
 const { reduceMotion, toggleReduceMotion } = useReduceMotion();
 const { data: hackatime } = await useFetch("/api/hackatime");
-const { data: names } = await useFetch("/api/me/display-name");
+const { data: names } = await useFetch("/api/me/display-name", {
+  key: "display-name",
+});
 
 const { data: referrals } = await useFetch("/api/me/referrals");
 const copied = ref(false);

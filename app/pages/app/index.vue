@@ -26,13 +26,11 @@
         </NuxtLink>
       </div>
 
-      <div v-if="coding" class="border-4 border-black p-5">
+      <div v-if="coding" data-guide="coding" class="border-4 border-black p-5">
         <h2 class="font-bold text-xl">hours coded</h2>
         <p class="mt-1 opacity-70">
           Earn {{ coding.pixelsPerHour }} pixels for every hour you code,
-          {{ coding.hoursPaid }} hour{{
-            coding.hoursPaid === 1 ? "" : "s"
-          }}
+          {{ coding.hoursPaid }} hour{{ coding.hoursPaid === 1 ? "" : "s" }}
           paid so far.
         </p>
         <div class="mt-3 h-4 border-4 border-black">
@@ -51,7 +49,7 @@
 
       <ShopCarousel />
 
-      <div>
+      <div data-guide="todo">
         <div class="space-y-2 p-5 border-4 border-b-0 border-black">
           <h2 class="font-bold text-xl">to-do</h2>
           <ul class="space-y-2">

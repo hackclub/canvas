@@ -69,6 +69,12 @@ const sections = [
     description: "How many people get through each step of getting started",
   },
   {
+    to: "/app/admin/flows",
+    label: "flows",
+    icon: "lucide:route",
+    description: "Replay the setup flow and the interactive guide",
+  },
+  {
     to: "/app/admin/audit",
     label: "audit log",
     icon: "lucide:scroll-text",
