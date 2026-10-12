@@ -141,7 +141,7 @@ export async function syncShipToAirtable(shipId: number, siteUrl: string) {
   }
   const justification = ship.justification
   if (justification) {
-    fields['Justification - Special Technical Features'] = justification.specialTechnicalFeatures
+    fields['Justification - Specific Technical Features'] = justification.specialTechnicalFeatures
     fields['Justification - Deflation Justification'] = justification.deflationJustification
     fields['Justification - Additional Justification'] = justification.additionalJustification
   }
