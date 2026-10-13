@@ -30,17 +30,13 @@ function parseJustification(value: Body['justification']): ShipJustification | u
     }
     overrideHours = Math.round(overrideHours * 100) / 100
   }
-  const justification: ShipJustification = {
+  return {
     overrideHours,
     overrideHoursJustification: parseProjectText(value.overrideHoursJustification ?? '', 'Override hours justification'),
     specialTechnicalFeatures: parseProjectText(value.specialTechnicalFeatures ?? '', 'Special technical features'),
     deflationJustification: parseProjectText(value.deflationJustification ?? '', 'Deflation justification'),
     additionalJustification: parseProjectText(value.additionalJustification ?? '', 'Additional justification'),
   }
-  if (overrideHours !== null && !justification.overrideHoursJustification) {
-    throw badRequest('Say why the hours were overridden')
-  }
-  return justification
 }
 
 // PATCH /api/admin/ships/:id — approves or rejects a pending ship, which unlocks the project.

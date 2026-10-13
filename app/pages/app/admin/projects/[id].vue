@@ -90,7 +90,7 @@
           <UiButtonSmall
             icon="lucide:check"
             class="disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="reviewing || (justification.overrideHours !== '' && !justification.overrideHoursJustification.trim())"
+            :disabled="reviewing"
             @click="review('approved')"
           >
             approve
@@ -163,7 +163,7 @@
             >
           </p>
           <p v-if="ship.justification?.overrideHours != null" class="text-sm opacity-70">
-            hours overridden to {{ ship.justification.overrideHours }}: {{ ship.justification.overrideHoursJustification }}
+            hours overridden to {{ ship.justification.overrideHours }}<template v-if="ship.justification.overrideHoursJustification">: {{ ship.justification.overrideHoursJustification }}</template>
           </p>
           <p v-if="ship.feedback" class="mt-1 whitespace-pre-wrap">
             {{ ship.feedback }}
@@ -312,7 +312,7 @@ const justificationFields = [
   {
     key: "overrideHoursJustification",
     label: "Override hours justification",
-    hint: "required if you override the hours",
+    hint: "why the hours were overridden",
   },
   {
     key: "specialTechnicalFeatures",
