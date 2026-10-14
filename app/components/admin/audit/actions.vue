@@ -99,6 +99,23 @@
             removed <b>{{ shopItem(a).name }}</b> from the shop
           </template>
 
+          <template v-else-if="a.action === 'order.status'">
+            <template v-if="orderStatus(a).to === 'rejected'">
+              rejected and refunded
+            </template>
+            <template v-else>marked</template>
+            <NuxtLink
+              :to="`/app/admin/orders/${orderStatus(a).orderId}`"
+              class="font-bold"
+            >
+              order #{{ orderStatus(a).orderId }}
+            </NuxtLink>
+            ({{ orderStatus(a).itemName }}) by <UserLink :user="a.target" />
+            <template v-if="orderStatus(a).to !== 'rejected'">
+              as {{ orderStatus(a).to }}
+            </template>
+          </template>
+
           <template v-else> did {{ a.action }}</template>
         </p>
         <p
@@ -160,6 +177,7 @@ const review = (a: Entry) => a.details as Details<"ship.review">;
 const override = (a: Entry) => a.details as Details<"ship.override">;
 const shopItem = (a: Entry) => a.details as Details<"shop.create">;
 const shopUpdate = (a: Entry) => a.details as Details<"shop.update">;
+const orderStatus = (a: Entry) => a.details as Details<"order.status">;
 const feedback = (a: Entry) =>
   "feedback" in a.details ? a.details.feedback : "";
 

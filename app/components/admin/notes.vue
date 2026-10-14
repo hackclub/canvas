@@ -52,10 +52,18 @@
 
 <script setup lang="ts">
 // Exactly one of these
-const props = defineProps<{ userId?: string; projectId?: number }>();
+const props = defineProps<{
+  userId?: string;
+  projectId?: number;
+  orderId?: number;
+}>();
 
 const target = computed(() =>
-  props.userId ? { userId: props.userId } : { projectId: props.projectId },
+  props.userId
+    ? { userId: props.userId }
+    : props.orderId
+      ? { orderId: props.orderId }
+      : { projectId: props.projectId },
 );
 const { data: notes, refresh } = await useFetch("/api/admin/notes", {
   query: target,

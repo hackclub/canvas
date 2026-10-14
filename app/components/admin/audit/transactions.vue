@@ -61,6 +61,17 @@
               </NuxtLink>
               <span v-else class="italic">a deleted project</span>
             </template>
+            <template v-else-if="t.reason === 'shop'">
+              {{ t.amount < 0 ? "— ordered" : "— refunded for" }}
+              <NuxtLink
+                v-if="t.order"
+                :to="`/app/admin/orders/${t.order.id}`"
+                class="font-bold"
+              >
+                {{ t.order.itemName }}
+              </NuxtLink>
+              <span v-else class="italic">a deleted order</span>
+            </template>
             <template v-else>
               — changed by
               <NuxtLink

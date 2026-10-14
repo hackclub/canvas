@@ -129,18 +129,24 @@ function errorMessage(e: unknown) {
 }
 
 // --- details ---
-const form = ref<ShopItemForm>({
-  name: "",
-  description: "",
-  price: "",
-  stock: "",
-  showInApp: true,
-  showOnLanding: false,
-});
+const form = ref<ShopItemForm>(emptyShopItemForm());
 function reset() {
   if (!item.value) return;
-  const { name, description, price, stock, showInApp, showOnLanding } =
-    item.value;
+  const {
+    name,
+    description,
+    price,
+    stock,
+    showInApp,
+    showOnLanding,
+    showQuantity,
+    perUserLimit,
+    checkoutLimit,
+    checkoutLimitEnabled,
+    disclaimer,
+    silly,
+    requirePhone,
+  } = item.value;
   form.value = {
     name,
     description,
@@ -148,6 +154,13 @@ function reset() {
     stock: stock ?? "",
     showInApp,
     showOnLanding,
+    showQuantity,
+    perUserLimit: perUserLimit ?? "",
+    checkoutLimit,
+    checkoutLimitEnabled,
+    disclaimer,
+    silly,
+    requirePhone,
   };
 }
 reset();

@@ -7,11 +7,16 @@
           trade your bonus points for prizes. get 5 bonus points per hour
           shipped!
         </p>
+        <div class="absolute top-8 right-8">
+          <UiButtonSmall
+            to="/app/shop/orders"
+            icon="lucide:package"
+            class="border-3 border-white"
+          >
+            your orders
+          </UiButtonSmall>
+        </div>
       </UiCard>
-
-      <p v-if="notice" class="border-4 border-black px-4 py-2 font-bold">
-        {{ notice }}
-      </p>
 
       <div
         v-if="shop?.items.length"
@@ -43,11 +48,10 @@
               </p>
               <UiButtonSmall
                 icon="lucide:shopping-cart"
-                :disabled="item.stock === 0"
-                class="disabled:opacity-50 disabled:cursor-not-allowed"
-                @click="buy"
+                :to="`/app/shop/${item.id}`"
+                :class="{ 'opacity-50': item.stock === 0 }"
               >
-                buy
+                {{ item.stock === 0 ? "sold out" : "buy" }}
               </UiButtonSmall>
             </div>
           </div>
@@ -80,10 +84,4 @@ definePageMeta({
 });
 
 const { data: shop } = await useFetch("/api/shop");
-
-// Placeholder until buying is built
-const notice = ref("");
-function buy() {
-  notice.value = "you don't have enough bonus points, silly.";
-}
 </script>

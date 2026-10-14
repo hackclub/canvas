@@ -1,4 +1,5 @@
-// POST /api/admin/shop { name, description, price, stock, showInApp?, showOnLanding? } — adds a shop item.
+// POST /api/admin/shop { name, description, price, stock, showInApp?, showOnLanding?, showQuantity?, perUserLimit?,
+// checkoutLimit?, checkoutLimitEnabled?, disclaimer?, silly?, requirePhone? } — adds a shop item.
 // The banner is uploaded separately, with PUT /api/admin/shop/:id/banner.
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)

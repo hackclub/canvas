@@ -5,6 +5,7 @@ import { type AnyPgColumn, bigint, boolean, index, integer, jsonb, pgTable, prim
 import type { AdminAction } from '../../shared/types/audit'
 import type { AuthUser } from '../../shared/types/auth'
 import type { ShipJustification, ShipStatus } from '../../shared/types/ships'
+import type { OrderStatus } from '../../shared/types/shop'
 
 // Profile from Hack Club Auth, refreshed on every sign-in
 export interface UserIdentity {
@@ -186,8 +187,9 @@ export const pixelTransactions = pgTable('pixel_transactions', {
   index('pixel_transactions_created_at_idx').on(t.createdAt),
 ])
 
-// Why a user's bonus points changed. Shop purchases will add a reason here.
-export type BonusPointTransactionReason = 'admin' | 'ship'
+// Why a user's bonus points changed. "shop" is spending them on an order (or getting them
+// back when it's rejected).
+export type BonusPointTransactionReason = 'admin' | 'ship' | 'shop'
 
 // Every change to a user's bonus points, for the admin audit log
 export const bonusPointTransactions = pgTable('bonus_point_transactions', {
@@ -202,6 +204,8 @@ export const bonusPointTransactions = pgTable('bonus_point_transactions', {
   actorId: text('actor_id').references(() => users.id, { onDelete: 'set null' }),
   // The approved ship that paid it, for reason "ship"
   shipId: integer('ship_id').references(() => ships.id, { onDelete: 'set null' }),
+  // The order it was spent on or refunded for, for reason "shop"
+  orderId: integer('order_id').references((): AnyPgColumn => shopOrders.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('bonus_point_transactions_user_id_idx').on(t.userId),
@@ -217,14 +221,55 @@ export const shopItems = pgTable('shop_items', {
   bannerKey: text('banner_key'),
   // Bonus points needed to buy one
   price: integer('price').notNull(),
-  // How many can be bought in total, null for no limit
+  // How many are left to buy, null for no limit. Taken down when ordered, put back when an
+  // order is rejected.
   stock: integer('stock'),
   // Whether it's in the carousel on the app home page, and on the public landing page
   showInApp: boolean('show_in_app').notNull().default(true),
   showOnLanding: boolean('show_on_landing').notNull().default(false),
+  // Whether people pick how many they want at checkout. If not, every order is for one.
+  showQuantity: boolean('show_quantity').notNull().default(true),
+  // Most one person can order in total (across orders that weren't rejected), null for no limit
+  perUserLimit: integer('per_user_limit'),
+  // Most that can be ordered at once, if checkoutLimitEnabled. Only a soft limit, since
+  // people can just place another order.
+  checkoutLimit: integer('checkout_limit').notNull().default(1),
+  checkoutLimitEnabled: boolean('checkout_limit_enabled').notNull().default(false),
+  // Shown on the checkout page, empty for none
+  disclaimer: text('disclaimer').notNull().default(''),
+  // Nothing to send out (e.g. a joke item): orders skip the address and are fulfilled straight away
+  silly: boolean('silly').notNull().default(false),
+  // Orders need a phone number: if the picked address doesn't have one, checkout asks for it
+  // (e.g. for carriers that need one). Doesn't apply to silly items, which take no address.
+  requirePhone: boolean('require_phone').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+export type { OrderStatus }
+
+// Someone buying a shop item with bonus points, for admins to send out
+export const shopOrders = pgTable('shop_orders', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // Null if the item has been deleted since, itemName still says what it was
+  itemId: integer('item_id').references(() => shopItems.id, { onDelete: 'set null' }),
+  itemName: text('item_name').notNull(),
+  // Bonus points for each one when it was ordered
+  price: integer('price').notNull(),
+  quantity: integer('quantity').notNull(),
+  status: text('status').$type<OrderStatus>().notNull().default('pending'),
+  // A ShippingAddress (shared/types/shop.ts) as JSON, encrypted with encryptToken
+  // (server/utils/tokens.ts). Only ever decrypted for admins, see server/utils/orders.ts.
+  // Never select it in a route that isn't admin only. Null for silly items, which aren't sent.
+  address: text('address'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('shop_orders_user_id_idx').on(t.userId),
+  index('shop_orders_item_id_idx').on(t.itemId),
+  index('shop_orders_status_idx').on(t.status),
+])
 
 // Every change made through the admin API, for the admin audit log
 export const adminActions = pgTable('admin_actions', {
@@ -238,19 +283,21 @@ export const adminActions = pgTable('admin_actions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('admin_actions_created_at_idx').on(t.createdAt)])
 
-// Internal notes admins leave on a user or a project, only ever shown in the admin panel.
-// A table of their own (rather than a column) so routes that return a whole project or user
-// row to its owner can't leak them. Each note is on exactly one of a user or a project.
+// Internal notes admins leave on a user, a project or a shop order, only ever shown in the
+// admin panel. A table of their own (rather than a column) so routes that return a whole
+// row to its owner can't leak them. Each note is on exactly one of a user, project or order.
 export const adminNotes = pgTable('admin_notes', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  orderId: integer('order_id').references(() => shopOrders.id, { onDelete: 'cascade' }),
   authorId: text('author_id').references(() => users.id, { onDelete: 'set null' }),
   body: text('body').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('admin_notes_user_id_idx').on(t.userId),
   index('admin_notes_project_id_idx').on(t.projectId),
+  index('admin_notes_order_id_idx').on(t.orderId),
 ])
 
 // One row per user per hour they made an authenticated request, for the admin activity graphs.

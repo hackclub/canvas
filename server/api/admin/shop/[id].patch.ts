@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 
-// PATCH /api/admin/shop/:id { name?, description?, price?, stock?, showInApp?, showOnLanding? } — changes a shop item
+// PATCH /api/admin/shop/:id { name?, description?, price?, stock?, showInApp?, showOnLanding?, showQuantity?,
+// perUserLimit?, checkoutLimit?, checkoutLimitEnabled?, disclaimer?, silly?, requirePhone? } — changes a shop item
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const item = await requireShopItem(event)

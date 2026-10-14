@@ -4,39 +4,13 @@ import { and, eq, isNotNull, max, ne } from 'drizzle-orm'
 // Needs the Airtable token/base/table (see AIRTABLE_* in .env.example). The address, email and
 // birthday are read from Hack Club Auth with the token saved at the user's last sign-in.
 const AIRTABLE_URL = 'https://api.airtable.com/v0'
-const HCA_URL = 'https://auth.hackclub.com'
 const HACKATIME_URL = 'https://hackatime.hackclub.com'
-
-// Identity from GET /api/v1/me, with the scopes /auth/hackclub requests
-interface HcaIdentity {
-  first_name?: string
-  last_name?: string
-  primary_email?: string
-  birthday?: string
-  addresses?: {
-    line_1?: string
-    line_2?: string
-    city?: string
-    state?: string
-    postal_code?: string
-    country?: string
-    primary?: boolean
-  }[]
-}
 
 interface HackatimeProjectDetails {
   name: string
   // ISO 8601, null if there are no heartbeats
   first_heartbeat: string | null
   last_heartbeat: string | null
-}
-
-async function fetchHcaIdentity(token: string) {
-  const { identity } = await $fetch<{ identity: HcaIdentity }>(
-    `${HCA_URL}/api/v1/me`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  )
-  return identity
 }
 
 async function fetchGithubUsername(token: string) {

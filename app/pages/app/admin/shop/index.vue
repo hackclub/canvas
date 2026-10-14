@@ -80,24 +80,10 @@ const { data: items } = await useFetch("/api/admin/shop");
 const creating = ref(false);
 const saving = ref(false);
 const error = ref("");
-const form = ref<ShopItemForm>({
-  name: "",
-  description: "",
-  price: "",
-  stock: "",
-  showInApp: true,
-  showOnLanding: false,
-});
+const form = ref<ShopItemForm>(emptyShopItemForm());
 
 function openCreate() {
-  form.value = {
-    name: "",
-    description: "",
-    price: "",
-    stock: "",
-    showInApp: true,
-    showOnLanding: false,
-  };
+  form.value = emptyShopItemForm();
   error.value = "";
   creating.value = true;
 }

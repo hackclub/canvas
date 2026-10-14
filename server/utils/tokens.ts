@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 
 // OAuth tokens (Hack Club Auth, Hackatime) are encrypted with AES-256-GCM before they go
 // in the database, so a database dump or backup alone can't be used to act as a user.
+// Shop order addresses are encrypted the same way (see server/utils/orders.ts).
 // Stored as "enc:v1:" + base64(iv, auth tag, ciphertext). Values without the prefix are
 // tokens saved before encryption existed; they're still readable and get encrypted the
 // next time the user signs in (or links Hackatime again).

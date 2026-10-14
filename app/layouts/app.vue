@@ -110,7 +110,11 @@ const links = computed(() => [
     label: "Projects",
     active: route.path.startsWith("/app/projects"),
   },
-  { to: "/app/shop", label: "Shop", active: route.path == "/app/shop" },
+  {
+    to: "/app/shop",
+    label: "Shop",
+    active: route.path.startsWith("/app/shop"),
+  },
   {
     to: "/app/me",
     label: `@${truncate(displayName.value, 15)}`,

@@ -1,4 +1,5 @@
 import type { ShipStatus } from './ships'
+import type { OrderStatus } from './shop'
 
 // An admin changing one of a user's balances
 interface BalanceChangeDetails {
@@ -21,3 +22,4 @@ export type AdminAction =
   // `changes` lists the fields that changed, e.g. ["price", "banner"]
   | { action: 'shop.update', details: { itemId: number, name: string, changes: string[] } }
   | { action: 'shop.delete', details: { itemId: number, name: string } }
+  | { action: 'order.status', details: { orderId: number, itemName: string, from: OrderStatus, to: OrderStatus } }

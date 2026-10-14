@@ -24,7 +24,7 @@
       <NuxtLink
         v-for="item in items"
         :key="item.id"
-        to="/app/shop"
+        :to="`/app/shop/${item.id}`"
         class="no-underline! snap-start shrink-0 w-72 max-w-[85%] flex flex-col border-4 border-black hover:bg-black hover:text-white transition-colors"
       >
         <img

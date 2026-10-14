@@ -29,9 +29,9 @@
     - Canvas - User ID: user ID from canvas
   - projects should be thrown in the airtable whenever shipped and approved
 
-- [ ] working shop
-  - [ ] shop fulfillment dashboard for admins
-  - [ ] allow ordering items to addresses from HCA i guess
+- [x] working shop
+  - [x] shop fulfillment dashboard for admins
+  - [x] allow ordering items to addresses from HCA i guess
 
 - [x] earn pixels for each hour coded
   - [x] progress bar on app home page

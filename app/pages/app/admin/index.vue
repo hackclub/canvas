@@ -57,6 +57,12 @@ const sections = [
     description: "What people can buy with their bonus points",
   },
   {
+    to: "/app/admin/orders",
+    label: "orders",
+    icon: "lucide:package",
+    description: "Shop orders to send out, with where to send them",
+  },
+  {
     to: "/app/admin/activity",
     label: "activity",
     icon: "lucide:chart-column",
