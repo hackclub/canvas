@@ -72,7 +72,10 @@
           </ul>
         </div>
         <div class="p-5 py-3 bg-black text-white">
-          <span>complete all items for 50 pixels!</span>
+          <span v-if="progress?.rewarded">
+            all done! you got 50 pixels for finishing the list :D
+          </span>
+          <span v-else>complete all items for 50 pixels!</span>
         </div>
       </div>
     </div>
@@ -105,12 +108,10 @@ const cards = [
 ];
 
 const { user } = useUserSession();
-const { data: projects } = await useFetch("/api/projects");
-const { data: hackatime } = await useFetch("/api/hackatime");
 const { data: progress } = await useFetch("/api/me/progress");
 
 // Pays for any newly coded hours, so it runs in the browser and updates the balance
-const { refreshPixels } = usePixels();
+const { refreshPixels, setPixels } = usePixels();
 const { data: coding } = useFetch("/api/me/coding", {
   method: "POST",
   server: false,
@@ -119,14 +120,23 @@ const { data: coding } = useFetch("/api/me/coding", {
   },
 });
 
-// The shop has no API to check yet, so it always shows as not done
 const todos = computed(() => [
-  { label: "link hackatime", done: !!hackatime.value?.linked },
-  { label: "create your first project", done: !!projects.value?.length },
+  { label: "link hackatime", done: !!progress.value?.hackatimeLinked },
+  { label: "create your first project", done: !!progress.value?.projectCreated },
   { label: "draw on the canvas", done: !!progress.value?.drawn },
   { label: "ship your first project", done: !!progress.value?.shipped },
-  { label: "get some loot from the shop", done: false },
+  { label: "get some loot from the shop", done: !!progress.value?.ordered },
 ]);
+
+// Claims the pixels for finishing the list the first time it's seen done. The server checks
+// it all again and only ever pays once.
+onMounted(async () => {
+  if (!progress.value?.allDone || progress.value.rewarded) return;
+  const { pixels } = await $fetch("/api/me/todo-reward", { method: "POST" });
+  if (pixels !== null) setPixels(pixels);
+  // Replaced rather than changed in place, since useFetch data is a shallow ref
+  progress.value = { ...progress.value, rewarded: true };
+});
 </script>
 
 <style scoped>

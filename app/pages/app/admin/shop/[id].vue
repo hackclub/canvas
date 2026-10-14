@@ -10,8 +10,10 @@
         </NuxtLink>
         <h1 class="mt-2 font-bold text-3xl">{{ item.name }}</h1>
         <p class="mt-1 opacity-70">
-          {{ item.price.toLocaleString() }} bonus points ·
-          {{ stockLabel(item.stock) }}
+          {{ item.price.toLocaleString() }} bonus points
+          <template v-if="item.stock !== null">
+            · {{ stockLabel(item.stock) }}
+          </template>
         </p>
         <div class="absolute top-8 right-8">
           <UiButtonSmall
@@ -146,6 +148,7 @@ function reset() {
     disclaimer,
     silly,
     requirePhone,
+    fields,
   } = item.value;
   form.value = {
     name,
@@ -161,6 +164,8 @@ function reset() {
     disclaimer,
     silly,
     requirePhone,
+    // Copied, so editing the form doesn't change the saved item until it's saved
+    fields: structuredClone(toRaw(fields)),
   };
 }
 reset();

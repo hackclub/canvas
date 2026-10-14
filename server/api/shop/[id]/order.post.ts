@@ -7,15 +7,16 @@ function badRequest(statusMessage: string) {
   return createError({ statusCode: 400, statusMessage })
 }
 
-// POST /api/shop/:id/order { quantity, addressId, phoneNumber? } — buys a shop item with bonus
-// points, shipped to one of the user's Hack Club Auth addresses (by its ID there). phoneNumber
-// is for items that need one when the address has none. Silly items don't take an address,
-// and their orders are fulfilled straight away.
+// POST /api/shop/:id/order { quantity, addressId, phoneNumber?, choices? } — buys a shop item
+// with bonus points, shipped to one of the user's Hack Club Auth addresses (by its ID there).
+// phoneNumber is for items that need one when the address has none. choices is what they
+// picked for the item's fields ({ fieldId: optionId }), which can add to the price. Silly
+// items don't take an address, and their orders are fulfilled straight away.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const itemId = Number(getRouterParam(event, 'id'))
   if (!Number.isSafeInteger(itemId)) throw createError({ statusCode: 404, statusMessage: 'Shop item not found' })
-  const body = await readBody<{ quantity?: unknown, addressId?: unknown, phoneNumber?: unknown }>(event)
+  const body = await readBody<{ quantity?: unknown, addressId?: unknown, phoneNumber?: unknown, choices?: unknown }>(event)
 
   // Checked straight after, the cast is just so it reads as a number from here on
   const quantity = (body?.quantity ?? 1) as number
@@ -82,7 +83,10 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const total = item.price * quantity
+    // Each one costs the item's price plus whatever the picked options add
+    const { choices, extra } = parseChoices(item.fields, body?.choices)
+    const unitPrice = item.price + extra
+    const total = unitPrice * quantity
     if (total > MAX_TOTAL) throw badRequest("That's too many!")
 
     // Only goes through if they can afford it, checked in the same statement so two orders
@@ -106,7 +110,8 @@ export default defineEventHandler(async (event) => {
         userId: user.id,
         itemId: item.id,
         itemName: item.name,
-        price: item.price,
+        price: unitPrice,
+        choices,
         quantity,
         status: item.silly ? 'fulfilled' : 'pending',
         address: address && !item.silly ? encryptAddress(address) : null,

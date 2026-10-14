@@ -121,6 +121,45 @@
               </span>
             </label>
 
+            <fieldset v-for="field in item.fields" :key="field.id">
+              <legend class="font-semibold">
+                {{ field.title }}
+                <span v-if="!field.required" class="font-normal opacity-70">
+                  (optional)</span
+                >
+              </legend>
+              <p
+                v-if="field.description"
+                class="text-sm opacity-70 whitespace-pre-wrap"
+              >
+                {{ field.description }}
+              </p>
+              <div class="mt-1 space-y-1">
+                <label
+                  v-for="option in fieldOptions(field)"
+                  :key="option.id"
+                  class="flex cursor-pointer items-center gap-3 border-2 px-3 py-2"
+                  :class="
+                    picks[field.id] === option.id
+                      ? 'border-white'
+                      : 'border-white/40 hover:border-white/70'
+                  "
+                >
+                  <input
+                    v-model="picks[field.id]"
+                    type="radio"
+                    :name="field.id"
+                    :value="option.id"
+                    class="size-4 shrink-0 accent-white"
+                  />
+                  <span class="flex-1">{{ option.label }}</span>
+                  <span v-if="option.price" class="text-sm opacity-70">
+                    +{{ option.price.toLocaleString() }} bonus points
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
             <!-- silly items aren't sent anywhere -->
             <div v-if="!item.silly">
               <label for="address" class="font-semibold">Shipping address</label>
@@ -206,6 +245,16 @@
                 <div class="flex justify-between gap-4">
                   <dt>Price</dt>
                   <dd>{{ item.price.toLocaleString() }} bonus points</dd>
+                </div>
+                <div
+                  v-for="choice in pricedChoices"
+                  :key="choice.fieldId"
+                  class="flex justify-between gap-4"
+                >
+                  <dt class="min-w-0">{{ choice.field }}: {{ choice.option }}</dt>
+                  <dd class="shrink-0">
+                    +{{ choice.price.toLocaleString() }} bonus points
+                  </dd>
                 </div>
                 <div class="flex justify-between gap-4">
                   <dt>Quantity</dt>
@@ -324,8 +373,40 @@ const validQuantity = computed(
   () =>
     Number.isInteger(orderQuantity.value) && (orderQuantity.value as number) >= 1,
 );
+// What they've picked for each of the item's fields: field ID -> option ID ("" for none).
+// Optional fields start on none, required ones on nothing so they have to be picked.
+const initialPicks = () =>
+  Object.fromEntries(
+    item.value.fields.filter((f) => !f.required).map((f) => [f.id, ""]),
+  );
+const picks = ref<Record<string, string>>(initialPicks());
+type Field = (typeof item.value.fields)[number];
+// Optional fields get a "none" option, since a picked radio button can't be unpicked
+const fieldOptions = (field: Field) =>
+  field.required
+    ? field.options
+    : [{ id: "", label: "None", price: 0 }, ...field.options];
+const pickedChoices = computed(() =>
+  item.value.fields.flatMap((field) => {
+    const option = field.options.find((o) => o.id === picks.value[field.id]);
+    return option
+      ? [{ fieldId: field.id, field: field.title, option: option.label, price: option.price }]
+      : [];
+  }),
+);
+// The ones that cost extra, for the order summary
+const pricedChoices = computed(() =>
+  pickedChoices.value.filter((c) => c.price > 0),
+);
+const missingField = computed(() =>
+  item.value.fields.find((f) => f.required && !picks.value[f.id]),
+);
+// Each one costs the item's price plus whatever the picked options add
+const unitPrice = computed(
+  () => item.value.price + pickedChoices.value.reduce((sum, c) => sum + c.price, 0),
+);
 const total = computed(() =>
-  validQuantity.value ? item.value.price * (orderQuantity.value as number) : 0,
+  validQuantity.value ? unitPrice.value * (orderQuantity.value as number) : 0,
 );
 
 const limitReached = computed(
@@ -353,6 +434,7 @@ const blocker = computed(() => {
   if (maxQuantity.value && (orderQuantity.value as number) > maxQuantity.value) {
     return `you can order at most ${maxQuantity.value}`;
   }
+  if (missingField.value) return `pick an option for ${missingField.value.title}`;
   const short = total.value - data.value!.bonusPoints;
   if (short > 0) return `you need ${short.toLocaleString()} more bonus points`;
   if (!item.value.silly && !addressId.value) return "pick an address";
@@ -375,10 +457,15 @@ async function placeOrder() {
         quantity: orderQuantity.value,
         addressId: item.value.silly ? undefined : addressId.value,
         phoneNumber: needsPhone.value ? phoneNumber.value : undefined,
+        choices: Object.fromEntries(
+          Object.entries(picks.value).filter(([, optionId]) => optionId),
+        ),
       },
     });
     quantity.value = 1;
     await Promise.all([refresh(), refreshPixels()]);
+    // After the refresh, in case the item's fields changed
+    picks.value = initialPicks();
   } catch (e) {
     error.value =
       (e as { data?: { message?: string } }).data?.message ??

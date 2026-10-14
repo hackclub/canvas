@@ -137,6 +137,15 @@
         class="mt-1 block w-full border-3 border-black px-3 py-1 outline-none"
       />
     </label>
+    <div class="space-y-1">
+      <h3 class="pt-2 font-bold text-lg">fields</h3>
+      <p class="text-sm opacity-70">
+        Questions people answer at checkout, like a size or colour. Changing
+        them doesn't change orders that were already placed.
+      </p>
+    </div>
+    <AdminShopFields v-model="form.fields" />
+
     <p v-if="error" class="text-red-600">{{ error }}</p>
     <UiButtonSmall
       type="submit"
@@ -149,6 +158,8 @@
 </template>
 
 <script setup lang="ts">
+import type { ShopItemFieldForm } from "~/components/admin/shop/fields.vue";
+
 export interface ShopItemForm {
   name: string;
   description: string;
@@ -165,6 +176,7 @@ export interface ShopItemForm {
   disclaimer: string;
   silly: boolean;
   requirePhone: boolean;
+  fields: ShopItemFieldForm[];
 }
 
 const form = defineModel<ShopItemForm>({ required: true });

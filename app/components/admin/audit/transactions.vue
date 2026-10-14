@@ -47,6 +47,9 @@
             <template v-else-if="t.reason === 'referral'">
               — got pixels for someone they referred</template
             >
+            <template v-else-if="t.reason === 'todo'">
+              — got pixels for finishing the to-do list</template
+            >
             <template v-else-if="t.reason === 'setup'">
               — got pixels for creating their first project</template
             >

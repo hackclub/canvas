@@ -16,6 +16,7 @@ export function emptyShopItemForm(): ShopItemForm {
     disclaimer: "",
     silly: false,
     requirePhone: false,
+    fields: [],
   };
 }
 
@@ -36,6 +37,13 @@ export function shopItemBody(form: ShopItemForm) {
     disclaimer: form.disclaimer,
     silly: form.silly,
     requirePhone: form.requirePhone,
+    fields: form.fields.map((field) => ({
+      ...field,
+      options: field.options.map((option) => ({
+        ...option,
+        price: option.price === "" ? 0 : option.price,
+      })),
+    })),
   };
 }
 

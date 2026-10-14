@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
       disclaimer: item.disclaimer,
       silly: item.silly,
       requirePhone: item.requirePhone,
+      fields: item.fields,
     },
     bonusPoints: me?.bonusPoints ?? 0,
     ordered: ordered?.quantity ?? 0,

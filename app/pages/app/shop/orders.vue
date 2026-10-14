@@ -48,6 +48,9 @@
                 points
               </p>
             </div>
+            <p v-if="order.choices.length" class="text-sm">
+              {{ order.choices.map((c) => `${c.field}: ${c.option}`).join(" · ") }}
+            </p>
             <p class="text-sm opacity-60">
               #{{ order.id }} · ordered
               {{ new Date(order.createdAt).toLocaleDateString() }}

@@ -19,6 +19,31 @@ export function parsePhoneNumber(value: unknown) {
   return phone
 }
 
+// Checks what someone picked for an item's fields at checkout ({ fieldId: optionId }) and
+// works out what the options add to the price of each one. Picks for fields or options that
+// don't exist (any more) are refused, so a changed item can't be ordered from an old page.
+export function parseChoices(fields: ShopItemField[], value: unknown) {
+  const picked = (value ?? {}) as Record<string, unknown>
+  if (typeof picked !== 'object' || Array.isArray(picked)) {
+    throw createError({ statusCode: 400, statusMessage: 'Choices must be an object of field IDs to option IDs' })
+  }
+  const changed = createError({ statusCode: 409, statusMessage: 'This item changed, refresh the page and try again' })
+  if (Object.keys(picked).some((id) => !fields.some((f) => f.id === id))) throw changed
+
+  const choices: OrderChoice[] = []
+  for (const field of fields) {
+    const optionId = picked[field.id]
+    if (optionId == null || optionId === '') {
+      if (field.required) throw createError({ statusCode: 400, statusMessage: `Pick an option for "${field.title}"` })
+      continue
+    }
+    const option = field.options.find((o) => o.id === optionId)
+    if (!option) throw changed
+    choices.push({ fieldId: field.id, field: field.title, optionId: option.id, option: option.label, price: option.price })
+  }
+  return { choices, extra: choices.reduce((sum, c) => sum + c.price, 0) }
+}
+
 // Shipping addresses are stored encrypted, like OAuth tokens
 export function encryptAddress(address: ShippingAddress) {
   return encryptToken(JSON.stringify(address))
@@ -37,6 +62,7 @@ export const orderColumns = {
   itemName: schema.shopOrders.itemName,
   price: schema.shopOrders.price,
   quantity: schema.shopOrders.quantity,
+  choices: schema.shopOrders.choices,
   status: schema.shopOrders.status,
   createdAt: schema.shopOrders.createdAt,
   updatedAt: schema.shopOrders.updatedAt,

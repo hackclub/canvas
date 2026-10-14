@@ -5,7 +5,7 @@ import { type AnyPgColumn, bigint, boolean, index, integer, jsonb, pgTable, prim
 import type { AdminAction } from '../../shared/types/audit'
 import type { AuthUser } from '../../shared/types/auth'
 import type { ShipJustification, ShipStatus } from '../../shared/types/ships'
-import type { OrderStatus } from '../../shared/types/shop'
+import type { OrderChoice, OrderStatus, ShopItemField } from '../../shared/types/shop'
 
 // Profile from Hack Club Auth, refreshed on every sign-in
 export interface UserIdentity {
@@ -55,6 +55,9 @@ export const users = pgTable('users', {
   // When they got the pixel for creating their first project in setup. Kept even if the
   // project is deleted, so deleting and recreating can't earn it again.
   setupRewardedAt: timestamp('setup_rewarded_at', { withTimezone: true }),
+  // When they got the pixels for finishing the home page to-do list (see server/utils/progress.ts).
+  // Only ever paid once, even if an item stops counting afterwards (e.g. an order is rejected).
+  todoRewardedAt: timestamp('todo_rewarded_at', { withTimezone: true }),
   // Pay-as-you-code only counts time on Hackatime projects linked to a Canvas project, after
   // the total each had when it was first seen: Hackatime project name -> total seconds then.
   // See syncCodingPixels (server/utils/coding.ts).
@@ -166,7 +169,7 @@ export const canvasPixelLog = pgTable('canvas_pixel_log', {
 }, (t) => [index('canvas_pixel_log_placed_at_idx').on(t.placedAt)])
 
 // Why a user's pixel balance changed
-export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup' | 'referral'
+export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup' | 'referral' | 'todo'
 
 // Every change to a user's pixel balance, for the admin audit log
 export const pixelTransactions = pgTable('pixel_transactions', {
@@ -242,6 +245,8 @@ export const shopItems = pgTable('shop_items', {
   // Orders need a phone number: if the picked address doesn't have one, checkout asks for it
   // (e.g. for carriers that need one). Doesn't apply to silly items, which take no address.
   requirePhone: boolean('require_phone').notNull().default(false),
+  // Questions asked at checkout, in order (see ShopItemField). Options can add to the price.
+  fields: jsonb('fields').$type<ShopItemField[]>().notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -255,8 +260,10 @@ export const shopOrders = pgTable('shop_orders', {
   // Null if the item has been deleted since, itemName still says what it was
   itemId: integer('item_id').references(() => shopItems.id, { onDelete: 'set null' }),
   itemName: text('item_name').notNull(),
-  // Bonus points for each one when it was ordered
+  // Bonus points for each one when it was ordered, including what the picked options added
   price: integer('price').notNull(),
+  // What they picked for the item's fields, in the fields' order
+  choices: jsonb('choices').$type<OrderChoice[]>().notNull().default([]),
   quantity: integer('quantity').notNull(),
   status: text('status').$type<OrderStatus>().notNull().default('pending'),
   // A ShippingAddress (shared/types/shop.ts) as JSON, encrypted with encryptToken

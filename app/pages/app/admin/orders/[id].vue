@@ -113,7 +113,7 @@
         <div class="border-4 border-black p-5">
           <h2 class="font-bold text-xl">details</h2>
           <dl class="mt-2 space-y-1">
-            <div v-for="field in details" :key="field.label" class="flex gap-2">
+            <div v-for="(field, i) in details" :key="i" class="flex gap-2">
               <dt class="opacity-70 shrink-0">{{ field.label }}:</dt>
               <dd class="min-w-0 break-words">
                 <NuxtLink v-if="field.to" :to="field.to" class="font-bold">
@@ -234,7 +234,15 @@ const details = computed(() => {
       to: o.itemId !== null ? `/app/admin/shop/${o.itemId}` : undefined,
     },
     { label: "Quantity", value: o.quantity.toLocaleString() },
-    { label: "Price each", value: `${o.price.toLocaleString()} bonus points` },
+    // What they picked for the item's fields
+    ...o.choices.map((c) => ({
+      label: c.field,
+      value: c.price ? `${c.option} (+${c.price.toLocaleString()})` : c.option,
+    })),
+    {
+      label: "Price each",
+      value: `${o.price.toLocaleString()} bonus points`,
+    },
     { label: "Total", value: `${total.value.toLocaleString()} bonus points` },
     {
       label: "Ordered by",

@@ -4,6 +4,11 @@ import { eq } from 'drizzle-orm'
 const MAX_NAME_LENGTH = 100
 const MAX_DESCRIPTION_LENGTH = 500
 const MAX_DISCLAIMER_LENGTH = 1000
+const MAX_FIELDS = 10
+const MAX_OPTIONS = 20
+const MAX_FIELD_TITLE_LENGTH = 100
+const MAX_FIELD_DESCRIPTION_LENGTH = 500
+const MAX_OPTION_LABEL_LENGTH = 100
 // Postgres `integer` tops out at 2,147,483,647
 const MAX_AMOUNT = 2_000_000_000
 
@@ -15,7 +20,7 @@ const isWholeNumber = (value: unknown, min: number, max = MAX_AMOUNT): value is 
   Number.isInteger(value) && (value as number) >= min && (value as number) <= max
 
 // Fields that can be left out when creating an item, for the column's default
-type OptionalField = 'showInApp' | 'showOnLanding' | 'showQuantity' | 'perUserLimit' | 'checkoutLimit' | 'checkoutLimitEnabled' | 'disclaimer' | 'silly' | 'requirePhone'
+type OptionalField = 'showInApp' | 'showOnLanding' | 'showQuantity' | 'perUserLimit' | 'checkoutLimit' | 'checkoutLimitEnabled' | 'disclaimer' | 'silly' | 'requirePhone' | 'fields'
 
 export interface ShopItemInput {
   name: string
@@ -31,6 +36,7 @@ export interface ShopItemInput {
   disclaimer: string
   silly: boolean
   requirePhone: boolean
+  fields: ShopItemField[]
 }
 
 // Checks the fields of a shop item being created, or just the ones sent when `partial`
@@ -91,6 +97,7 @@ export function parseShopItem(body: Record<string, unknown> | undefined, partial
     }
     item.disclaimer = disclaimer.trim()
   }
+  if (body?.fields !== undefined) item.fields = parseShopItemFields(body.fields)
   for (const field of ['showInApp', 'showOnLanding', 'showQuantity', 'checkoutLimitEnabled', 'silly', 'requirePhone'] as const) {
     if (has(field)) {
       // Left out when creating means the column's default
@@ -100,6 +107,61 @@ export function parseShopItem(body: Record<string, unknown> | undefined, partial
     }
   }
   return item
+}
+
+// Keeps an ID the admin page sent (so answers to a field keep matching it after edits), or
+// makes a new one for something just added
+function keepOrMakeId(id: unknown, taken: Set<string>) {
+  const kept = typeof id === 'string' && /^[\w-]{1,40}$/.test(id) && !taken.has(id) ? id : null
+  const result = kept ?? crypto.randomUUID().slice(0, 8)
+  taken.add(result)
+  return result
+}
+
+// Checks the checkout fields of a shop item (see ShopItemField)
+function parseShopItemFields(value: unknown): ShopItemField[] {
+  if (!Array.isArray(value) || value.length > MAX_FIELDS) {
+    throw badRequest(`Fields must be a list of at most ${MAX_FIELDS}`)
+  }
+  const fieldIds = new Set<string>()
+  return value.map((raw, i) => {
+    const field = (raw ?? {}) as Record<string, unknown>
+    const which = `Field ${i + 1}`
+    if (field.type !== 'choice') throw badRequest(`${which} must be a multiple choice field`)
+    const title = typeof field.title === 'string' ? field.title.trim() : ''
+    if (!title || title.length > MAX_FIELD_TITLE_LENGTH) {
+      throw badRequest(`${which} needs a title of 1 to ${MAX_FIELD_TITLE_LENGTH} characters`)
+    }
+    const description = field.description ?? ''
+    if (typeof description !== 'string' || description.length > MAX_FIELD_DESCRIPTION_LENGTH) {
+      throw badRequest(`The description of "${title}" can be at most ${MAX_FIELD_DESCRIPTION_LENGTH} characters`)
+    }
+    if (typeof field.required !== 'boolean') throw badRequest(`Whether "${title}" is required must be true or false`)
+    if (!Array.isArray(field.options) || !field.options.length || field.options.length > MAX_OPTIONS) {
+      throw badRequest(`"${title}" needs 1 to ${MAX_OPTIONS} options`)
+    }
+    const optionIds = new Set<string>()
+    const options = field.options.map((rawOption, j) => {
+      const option = (rawOption ?? {}) as Record<string, unknown>
+      const label = typeof option.label === 'string' ? option.label.trim() : ''
+      if (!label || label.length > MAX_OPTION_LABEL_LENGTH) {
+        throw badRequest(`Option ${j + 1} of "${title}" needs a name of 1 to ${MAX_OPTION_LABEL_LENGTH} characters`)
+      }
+      const price = option.price ?? 0
+      if (!isWholeNumber(price, 0)) {
+        throw badRequest(`The extra cost of "${label}" in "${title}" must be a whole number of bonus points`)
+      }
+      return { id: keepOrMakeId(option.id, optionIds), label, price }
+    })
+    return {
+      id: keepOrMakeId(field.id, fieldIds),
+      type: 'choice' as const,
+      title,
+      description: description.trim(),
+      required: field.required,
+      options,
+    }
+  })
 }
 
 // Loads the shop item in the `id` route param, 404ing if there isn't one

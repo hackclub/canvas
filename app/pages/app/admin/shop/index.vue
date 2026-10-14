@@ -42,8 +42,10 @@
           <div class="p-5 border-t-4 border-black">
             <h2 class="font-bold text-xl">{{ item.name }}</h2>
             <p class="text-sm opacity-60">
-              {{ item.price.toLocaleString() }} bonus points ·
-              {{ stockLabel(item.stock) }}
+              {{ item.price.toLocaleString() }} bonus points
+              <template v-if="item.stock !== null">
+                · {{ stockLabel(item.stock) }}
+              </template>
             </p>
             <p class="mt-1 opacity-70 line-clamp-2">
               {{ item.description || "No description" }}

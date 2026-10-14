@@ -1,13 +1,17 @@
+import { isDeepStrictEqual } from 'node:util'
 import { eq } from 'drizzle-orm'
 
 // PATCH /api/admin/shop/:id { name?, description?, price?, stock?, showInApp?, showOnLanding?, showQuantity?,
-// perUserLimit?, checkoutLimit?, checkoutLimitEnabled?, disclaimer?, silly?, requirePhone? } — changes a shop item
+// perUserLimit?, checkoutLimit?, checkoutLimitEnabled?, disclaimer?, silly?, requirePhone?, fields? } — changes a shop item
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const item = await requireShopItem(event)
   const input = parseShopItem(await readBody(event), true)
 
-  const changes = (Object.keys(input) as (keyof typeof input)[]).filter((field) => input[field] !== item[field])
+  // Compared deeply (ignoring key order, which jsonb doesn't keep) so the fields list only
+  // counts as changed if something in it did
+  const changes = (Object.keys(input) as (keyof typeof input)[])
+    .filter((field) => !isDeepStrictEqual(input[field], item[field]))
   if (!changes.length) return item
 
   return useDB().transaction(async (tx) => {

@@ -50,6 +50,9 @@
                 (silly)</span
               >
             </p>
+            <p v-if="order.choices.length" class="text-sm truncate">
+              {{ order.choices.map((c) => `${c.field}: ${c.option}`).join(" · ") }}
+            </p>
             <p class="text-sm opacity-60 truncate">
               #{{ order.id }} · by {{ userName(order.user) }} ·
               {{ new Date(order.createdAt).toLocaleString() }}
