@@ -1,7 +1,7 @@
 import { and, count, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 
 // Pixels for each person you refer who becomes verified & eligible and draws on the canvas
-export const REFERRAL_PIXELS = 5
+export const REFERRAL_PIXELS = 15
 // Most referrals one person can be paid for
 export const REFERRAL_CAP = 10
 

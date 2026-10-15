@@ -116,6 +116,16 @@
             </template>
           </template>
 
+          <template v-else-if="a.action === 'slack.message'">
+            sent {{ SLACK_MESSAGE_LABELS[slackMessage(a).type ?? "custom"] }} to
+            <template v-if="slackMessage(a).everyone">everyone</template>
+            <UserLink v-else-if="a.target" :user="a.target" />
+            <template v-else>some people</template>
+            on Slack
+            ({{ slackMessage(a).recipients.toLocaleString() }}
+            {{ slackMessage(a).recipients == 1 ? "person" : "people" }})
+          </template>
+
           <template v-else> did {{ a.action }}</template>
         </p>
         <p
@@ -178,8 +188,14 @@ const override = (a: Entry) => a.details as Details<"ship.override">;
 const shopItem = (a: Entry) => a.details as Details<"shop.create">;
 const shopUpdate = (a: Entry) => a.details as Details<"shop.update">;
 const orderStatus = (a: Entry) => a.details as Details<"order.status">;
+const slackMessage = (a: Entry) => a.details as Details<"slack.message">;
+// Shown quoted under the entry
 const feedback = (a: Entry) =>
-  "feedback" in a.details ? a.details.feedback : "";
+  "feedback" in a.details
+    ? a.details.feedback
+    : "message" in a.details
+      ? a.details.message
+      : "";
 
 // Links to a user or project in the admin panel, or says it's been deleted
 const UserLink = (props: { user: Person | null }) =>

@@ -32,7 +32,6 @@ function parseJustification(value: Body['justification']): ShipJustification | u
   }
   return {
     overrideHours,
-    overrideHoursJustification: parseProjectText(value.overrideHoursJustification ?? '', 'Override hours justification'),
     specialTechnicalFeatures: parseProjectText(value.specialTechnicalFeatures ?? '', 'Special technical features'),
     deflationJustification: parseProjectText(value.deflationJustification ?? '', 'Deflation justification'),
     additionalJustification: parseProjectText(value.additionalJustification ?? '', 'Additional justification'),
@@ -43,7 +42,8 @@ function parseJustification(value: Body['justification']): ShipJustification | u
 // With `override`, sets the project's latest ship to any status instead; setting it back to
 // pending puts it back in the review queue and locks the project again.
 // The first time a ship is approved, its owner gets paid for its hours (see payShip) and it's
-// synced to Airtable (see syncShipToAirtable).
+// synced to Airtable (see syncShipToAirtable). The owner is DMed on Slack when it's first
+// approved and whenever it's rejected (see server/utils/notifications.ts).
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const id = Number(getRouterParam(event, 'id'))
@@ -74,6 +74,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const justification = parseJustification(body.justification)
+  // Reviewers confirm the hours a ship is paid for (overriding a status doesn't pay differently)
+  if (body.status === 'approved' && !override && justification?.overrideHours == null) {
+    throw badRequest('Enter the hours this ship is paid for')
+  }
 
   const reviewed = body.status !== 'pending'
 
@@ -96,7 +100,8 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  let paid = false
+  let payout: Awaited<ReturnType<typeof payShip>> | undefined
+  let previousStatus: ShipStatus | undefined
   const updated = Number.isSafeInteger(id)
     ? await useDB().transaction(async (tx) => {
         // Locked so the audit log gets the status it was changed from
@@ -119,11 +124,11 @@ export default defineEventHandler(async (event) => {
           .where(and(...where))
           .returning()
         if (updated && before && updated.status === 'approved' && updated.pixelsAwarded === null) {
-          const payout = await payShip(tx, updated, before.ownerId, updated.hackatimeSeconds ?? fallbackSeconds ?? 0)
+          payout = await payShip(tx, updated, before.ownerId, updated.hackatimeSeconds ?? fallbackSeconds ?? 0)
           Object.assign(updated, { pixelsAwarded: payout.pixels, bonusPointsAwarded: payout.bonusPoints })
-          paid = true
         }
         if (updated && before) {
+          previousStatus = before.status
           await logAdminAction(
             tx,
             me.id,
@@ -153,12 +158,15 @@ export default defineEventHandler(async (event) => {
 
   // Once the approval is committed. In the background, so a slow or failing Airtable doesn't
   // hold up or fail the review.
-  if (paid) {
+  if (payout) {
     // From config rather than request headers, which the sender can set (X-Forwarded-Host)
     const siteUrl = useRuntimeConfig(event).siteUrl || getRequestURL(event).origin
     syncShipToAirtable(id, siteUrl).catch((error) => {
       console.error(`Failed to sync ship ${id} to Airtable:`, error)
     })
+    // Only the first approval, which is when they're paid
+    void notifyShipApproved(id, payout, me.id)
   }
+  if (updated.status === 'rejected' && previousStatus !== 'rejected') void notifyShipRejected(id, feedback, me.id)
   return updated
 })

@@ -94,6 +94,25 @@
       </div>
 
       <div class="space-y-2">
+        <h2 class="font-bold text-xl">slack announcements</h2>
+        <UiButtonSmall
+          class="disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!broadcasts || savingBroadcasts"
+          @click="toggleBroadcasts"
+        >
+          {{ broadcasts?.subscribed ? "unsubscribe" : "subscribe" }}
+        </UiButtonSmall>
+        <p class="text-sm opacity-70">
+          {{
+            broadcasts?.subscribed
+              ? "You get announcements sent to everyone on Canvas as Slack DMs."
+              : "You don't get announcements sent to everyone on Canvas."
+          }}
+          You'll always hear about your own ships.
+        </p>
+      </div>
+
+      <div class="space-y-2">
         <h2 class="font-bold text-xl">accessibility</h2>
         <UiButtonSmall @click="toggleReduceMotion">
           {{ reduceMotion ? "enable" : "disable" }} background animation
@@ -128,6 +147,21 @@ async function copyLink() {
   await navigator.clipboard.writeText(referrals.value.link);
   copied.value = true;
   setTimeout(() => (copied.value = false), 2000);
+}
+
+const { data: broadcasts } = await useFetch("/api/me/broadcasts");
+const savingBroadcasts = ref(false);
+async function toggleBroadcasts() {
+  if (!broadcasts.value) return;
+  savingBroadcasts.value = true;
+  try {
+    broadcasts.value = await $fetch<{ subscribed: boolean }>("/api/me/broadcasts", {
+      method: "PATCH",
+      body: { subscribed: !broadcasts.value.subscribed },
+    });
+  } finally {
+    savingBroadcasts.value = false;
+  }
 }
 
 const nameInput = ref(names.value?.displayNameOverride ?? "");

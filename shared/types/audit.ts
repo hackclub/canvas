@@ -23,3 +23,17 @@ export type AdminAction =
   | { action: 'shop.update', details: { itemId: number, name: string, changes: string[] } }
   | { action: 'shop.delete', details: { itemId: number, name: string } }
   | { action: 'order.status', details: { orderId: number, itemName: string, from: OrderStatus, to: OrderStatus } }
+  // A Slack DM to some people (or everyone who hasn't unsubscribed), with how many it went to.
+  // `message` is only set for custom messages.
+  | { action: 'slack.message', details: { type: SlackMessageType, message: string, everyone: boolean, recipients: number } }
+
+// The kinds of DM the bot sends: the automatic ones, and "custom" ones written by an admin
+export type SlackMessageType = 'shipApproved' | 'shipRejected' | 'welcome' | 'nudge' | 'custom'
+
+// Something the bot did, for the "bot" section of the audit log
+export type BotLogEntry =
+  // A DM, with what it said. `error` is set if it couldn't be sent.
+  | { kind: 'message', details: { type: SlackMessageType, text: string, error?: string } }
+  // Their double pixels deal turned on (until `until`) or off. "nudge" is the DM turning it on,
+  // "paid" is it being used up by a ship, "admin" is an admin doing it.
+  | { kind: 'boost', details: { enabled: boolean, until: string | null, reason: 'nudge' | 'paid' | 'admin' } }

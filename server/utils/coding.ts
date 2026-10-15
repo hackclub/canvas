@@ -1,8 +1,9 @@
 import { eq, sql } from 'drizzle-orm'
 
-// Pixels per whole hour coded, paid as the time shows up in Hackatime. Separate from, and in
-// addition to, what shipping pays (server/utils/payouts.ts).
-export const CODING_PIXELS_PER_HOUR = 10
+// Pixels for every whole 15 minutes coded (a "drop"), paid as the time shows up in Hackatime.
+// Separate from, and in addition to, what shipping pays (server/utils/payouts.ts).
+export const CODING_PIXELS_PER_DROP = 5
+export const CODING_DROP_SECONDS = 15 * 60
 
 // Hackatime is only ever called from syncCodingPixels, i.e. when the user asks for their
 // progress, and at most once per user per SYNC_INTERVAL (also after a failure, so an outage
@@ -39,21 +40,23 @@ function hackatimeTotals(userId: string): Promise<Totals | null> {
 }
 
 export interface CodingProgress {
-  // Whole hours paid for so far
+  // Hours paid for so far, in whole drops (e.g. 1.25)
   hoursPaid: number
-  // Seconds into the next hour
-  secondsIntoHour: number
+  // Seconds into the next drop
+  secondsIntoDrop: number
+  dropSeconds: number
+  pixelsPerDrop: number
   pixelsPerHour: number
   // Pixels paid by this call
   awarded: number
 }
 
-// Pays pixels for new whole hours of time on Hackatime projects that are linked to one of
+// Pays pixels for new whole drops (15 minutes) of time on Hackatime projects that are linked to one of
 // the user's Canvas projects. Time on other Hackatime projects doesn't count, and neither
 // does what a linked one had when it was first seen (its baseline), so linking an old
 // project doesn't pay for the past. Returns null if Hackatime isn't linked. Safe to call
 // often: the Hackatime call is rate limited per user and the payout is made under a row
-// lock, so hours are never paid twice.
+// lock, so time is never paid twice.
 export async function syncCodingPixels(userId: string): Promise<CodingProgress | null> {
   const totals = await hackatimeTotals(userId)
   if (totals === null) return null
@@ -63,7 +66,7 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
       .select({
         baselines: schema.users.codingBaselines,
         seen: schema.users.codingSeen,
-        paid: schema.users.codingHoursPaid,
+        paid: schema.users.codingQuartersPaid,
         linked: schema.users.hackatimeId,
       })
       .from(schema.users)
@@ -121,25 +124,27 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
     }
 
     const progress = (awarded = 0): CodingProgress => {
-      const paidSeconds = (row.paid + awarded / CODING_PIXELS_PER_HOUR) * 3600
+      const paidSeconds = (row.paid + awarded / CODING_PIXELS_PER_DROP) * CODING_DROP_SECONDS
       return {
         hoursPaid: paidSeconds / 3600,
         // Unlinking a project can leave less counted than was paid for, which shows as 0
-        secondsIntoHour: Math.min(3599, Math.max(0, coded - paidSeconds)),
-        pixelsPerHour: CODING_PIXELS_PER_HOUR,
+        secondsIntoDrop: Math.min(CODING_DROP_SECONDS - 1, Math.max(0, coded - paidSeconds)),
+        dropSeconds: CODING_DROP_SECONDS,
+        pixelsPerDrop: CODING_PIXELS_PER_DROP,
+        pixelsPerHour: CODING_PIXELS_PER_DROP * (3600 / CODING_DROP_SECONDS),
         awarded,
       }
     }
 
-    const newHours = Math.floor(coded / 3600) - row.paid
-    if (newHours <= 0) return progress()
+    const newDrops = Math.floor(coded / CODING_DROP_SECONDS) - row.paid
+    if (newDrops <= 0) return progress()
 
-    const pixels = newHours * CODING_PIXELS_PER_HOUR
+    const pixels = newDrops * CODING_PIXELS_PER_DROP
     const [balances] = await tx
       .update(schema.users)
       .set({
         pixels: sql`${schema.users.pixels} + ${pixels}`,
-        codingHoursPaid: row.paid + newHours,
+        codingQuartersPaid: row.paid + newDrops,
       })
       .where(eq(schema.users.id, userId))
       .returning({ pixels: schema.users.pixels })

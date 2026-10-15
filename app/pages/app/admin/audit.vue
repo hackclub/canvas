@@ -31,6 +31,7 @@
         :key="section"
         :kind="section"
       />
+      <AdminAuditBot v-else-if="section === 'bot'" />
       <AdminAuditActions v-else />
     </div>
   </div>
@@ -60,6 +61,13 @@ const sections = [
     label: "admin actions",
     icon: "lucide:shield",
     description: "Every change made by an admin",
+  },
+  {
+    value: "bot",
+    label: "bot",
+    icon: "lucide:bot",
+    description:
+      "Every Slack DM the bot sent, and every time someone's double pixels were turned on or off",
   },
 ] as const;
 const section = ref<(typeof sections)[number]["value"]>("pixels");

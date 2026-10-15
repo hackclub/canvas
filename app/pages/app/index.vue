@@ -27,21 +27,23 @@
       </div>
 
       <div v-if="coding" data-guide="coding" class="border-4 border-black p-5">
-        <h2 class="font-bold text-xl">hours coded</h2>
+        <h2 class="font-bold text-xl">next pixel drop</h2>
         <p class="mt-1 opacity-70">
           Earn {{ coding.pixelsPerHour }} pixels for every hour you code,
-          {{ coding.hoursPaid }} hour{{ coding.hoursPaid === 1 ? "" : "s" }}
-          paid so far.
+          {{ hoursPaid }} hour{{ hoursPaid === 1 ? "" : "s" }} paid so far.
         </p>
         <div class="mt-3 h-4 border-4 border-black">
           <div
             class="h-full bg-black"
-            :style="{ width: `${(coding.secondsIntoHour / 3600) * 100}%` }"
+            :style="{
+              width: `${(coding.secondsIntoDrop / coding.dropSeconds) * 100}%`,
+            }"
           />
         </div>
         <p class="mt-1 text-sm opacity-70">
-          {{ Math.floor(coding.secondsIntoHour / 60) }} / 60 minutes until your
-          next {{ coding.pixelsPerHour }} pixels
+          {{ Math.floor(coding.secondsIntoDrop / 60) }} /
+          {{ coding.dropSeconds / 60 }} minutes until your next
+          {{ coding.pixelsPerDrop }} pixels
         </p>
       </div>
 
@@ -110,7 +112,7 @@ const cards = [
 const { user } = useUserSession();
 const { data: progress } = await useFetch("/api/me/progress");
 
-// Pays for any newly coded hours, so it runs in the browser and updates the balance
+// Pays for any newly coded time, so it runs in the browser and updates the balance
 const { refreshPixels, setPixels } = usePixels();
 const { data: coding } = useFetch("/api/me/coding", {
   method: "POST",
@@ -119,6 +121,10 @@ const { data: coding } = useFetch("/api/me/coding", {
     if (response._data?.awarded) refreshPixels();
   },
 });
+// Paid in quarter hours, shown to at most 1 decimal
+const hoursPaid = computed(
+  () => Math.round((coding.value?.hoursPaid ?? 0) * 10) / 10,
+);
 
 const todos = computed(() => [
   { label: "link hackatime", done: !!progress.value?.hackatimeLinked },

@@ -2,7 +2,7 @@
 // to apply them. See server/api/db.get.ts for query examples.
 import { sql } from 'drizzle-orm'
 import { type AnyPgColumn, bigint, boolean, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
-import type { AdminAction } from '../../shared/types/audit'
+import type { AdminAction, BotLogEntry } from '../../shared/types/audit'
 import type { AuthUser } from '../../shared/types/auth'
 import type { ShipJustification, ShipStatus } from '../../shared/types/ships'
 import type { OrderChoice, OrderStatus, ShopItemField } from '../../shared/types/shop'
@@ -62,8 +62,8 @@ export const users = pgTable('users', {
   // the total each had when it was first seen: Hackatime project name -> total seconds then.
   // See syncCodingPixels (server/utils/coding.ts).
   codingBaselines: jsonb('coding_baselines').$type<Record<string, number>>().notNull().default({}),
-  // Whole hours of counted time that have already been paid for
-  codingHoursPaid: integer('coding_hours_paid').notNull().default(0),
+  // Whole 15 minute drops of counted time that have already been paid for (CODING_DROP_SECONDS)
+  codingQuartersPaid: integer('coding_quarters_paid').notNull().default(0),
   // Their referral link is /?ref=<code>. Made the first time they look at it.
   referralCode: text('referral_code').unique(),
   // Who referred them, set when they first sign up through that link and never changed
@@ -72,6 +72,18 @@ export const users = pgTable('users', {
   referralRewardedAt: timestamp('referral_rewarded_at', { withTimezone: true }),
   // When they first signed in, for the admin graphs
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // When they were sent the welcome DM (30 minutes after signing up), see server/utils/notifications.ts.
+  // Set even if they have no Slack ID, so they're only ever looked at once.
+  welcomeMessageSentAt: timestamp('welcome_message_sent_at', { withTimezone: true }),
+  // When they were checked for the "you haven't started yet" DM (2 days after signing up),
+  // whether or not it was sent
+  nudgeCheckedAt: timestamp('nudge_checked_at', { withTimezone: true }),
+  // Set by that DM (or by an admin): ships made before this pay double pixels, up to
+  // SHIP_BOOST_MAX extra (see payShip in server/utils/payouts.ts). Cleared once it's paid.
+  shipBoostUntil: timestamp('ship_boost_until', { withTimezone: true }),
+  // Set from the unsubscribe button on admin messages sent to everyone. Messages sent to
+  // specific people still reach them.
+  broadcastsUnsubscribed: boolean('broadcasts_unsubscribed').notNull().default(false),
   // Seconds on the Hackatime projects linked to their projects (since HACKATIME_START) the
   // last time pay-as-you-code looked, for the admin graphs' unshipped hours
   linkedSecondsSeen: integer('linked_seconds_seen').notNull().default(0),
@@ -126,6 +138,7 @@ export const ships = pgTable('ships', {
   // this was recorded, which use the time when they're approved instead.
   hackatimeSeconds: integer('hackatime_seconds'),
   // Paid out the first time the ship is approved (see server/utils/payouts.ts), null until then.
+  // Includes the ship boost's extra pixels, if it got them.
   // Changing the status afterwards doesn't take them back or pay them again.
   pixelsAwarded: integer('pixels_awarded'),
   // Set by the reviewer: pixels for this ship are multiplied (COOKING_MULTIPLIER in server/utils/payouts.ts)
@@ -169,7 +182,8 @@ export const canvasPixelLog = pgTable('canvas_pixel_log', {
 }, (t) => [index('canvas_pixel_log_placed_at_idx').on(t.placedAt)])
 
 // Why a user's pixel balance changed
-export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup' | 'referral' | 'todo'
+// "boost" is the extra pixels for shipping before shipBoostUntil, paid with a ship (shipId is set)
+export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup' | 'referral' | 'todo' | 'boost'
 
 // Every change to a user's pixel balance, for the admin audit log
 export const pixelTransactions = pgTable('pixel_transactions', {
@@ -289,6 +303,22 @@ export const adminActions = pgTable('admin_actions', {
   projectId: integer('project_id').references(() => projects.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index('admin_actions_created_at_idx').on(t.createdAt)])
+
+// Every Slack DM the bot tried to send (see server/utils/notifications.ts), and every time
+// someone's double pixels deal (users.shipBoostUntil) was turned on or off, for the admin audit log
+export const botLog = pgTable('bot_log', {
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  // Who it was sent to, or whose deal changed
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  // The admin who did it, null when it happened on its own (a ship review's DM has the reviewer)
+  actorId: text('actor_id').references(() => users.id, { onDelete: 'set null' }),
+  kind: text('kind').$type<BotLogEntry['kind']>().notNull(),
+  details: jsonb('details').$type<BotLogEntry['details']>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index('bot_log_created_at_idx').on(t.createdAt),
+  index('bot_log_user_id_idx').on(t.userId),
+])
 
 // Internal notes admins leave on a user, a project or a shop order, only ever shown in the
 // admin panel. A table of their own (rather than a column) so routes that return a whole

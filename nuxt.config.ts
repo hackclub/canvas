@@ -38,7 +38,8 @@ export default defineNuxtConfig({
       clientId: process.env.HACKATIME_CLIENT_ID ?? '',
       clientSecret: process.env.HACKATIME_CLIENT_SECRET ?? '',
     },
-    // Slack bot token, for looking up display names; overridable with NUXT_SLACK_BOT_TOKEN
+    // Slack bot token, for looking up display names and sending DMs (server/utils/notifications.ts);
+    // overridable with NUXT_SLACK_BOT_TOKEN
     slack: {
       botToken: process.env.SLACK_XOXB ?? '',
       // Channel new users are added to when they sign up; overridable with NUXT_SLACK_CHANNEL_ID

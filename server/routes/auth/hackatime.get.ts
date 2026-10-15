@@ -112,7 +112,7 @@ export default defineEventHandler(async (event) => {
   // them be paid again, so the account can't be changed after that
   const current = await db.query.users.findFirst({
     where: eq(schema.users.id, user.id),
-    columns: { hackatimeId: true, codingHoursPaid: true },
+    columns: { hackatimeId: true, codingQuartersPaid: true },
   })
   const switching = !!current?.hackatimeId && current.hackatimeId !== me.id
   if (switching) {
@@ -122,7 +122,7 @@ export default defineEventHandler(async (event) => {
       .innerJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
       .where(and(eq(schema.projects.userId, user.id), isNotNull(schema.ships.pixelsAwarded)))
       .limit(1)
-    if (paid || current!.codingHoursPaid > 0) {
+    if (paid || current!.codingQuartersPaid > 0) {
       throw createError({
         statusCode: 409,
         statusMessage: "You've already been paid for time from another Hackatime account, so it can't be changed",

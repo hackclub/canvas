@@ -50,6 +50,18 @@
             <template v-else-if="t.reason === 'todo'">
               — got pixels for finishing the to-do list</template
             >
+            <template v-else-if="t.reason === 'boost'">
+              — got double pixels for shipping
+              <NuxtLink
+                v-if="t.project"
+                :to="`/app/admin/projects/${t.project.id}`"
+                class="font-bold"
+              >
+                {{ t.project.name }}
+              </NuxtLink>
+              <span v-else class="italic">a deleted project</span>
+              in time</template
+            >
             <template v-else-if="t.reason === 'setup'">
               — got pixels for creating their first project</template
             >

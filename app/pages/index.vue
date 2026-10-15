@@ -44,7 +44,7 @@
         </p>
         <p class="opacity-50">
           <NuxtLink
-            to="https://hackclub.enterprise.slack.com/archives/CN271UYS0"
+            :to="`https://hackclub.enterprise.slack.com/archives/${CANVAS_CHANNEL_ID}`"
             >#canvas</NuxtLink
           >
           - by emma
@@ -146,7 +146,7 @@
                     <!-- prettier-ignore -->
                     <div class="flex flex-col gap-1">
                       <NuxtLink to="/app">open canvas</NuxtLink>
-                      <NuxtLink to="https://hackclub.enterprise.slack.com/archives/CN271UYS0">#canvas</NuxtLink>
+                      <NuxtLink :to="`https://hackclub.enterprise.slack.com/archives/${CANVAS_CHANNEL_ID}`">#canvas</NuxtLink>
                     </div>
                   </div>
                 </div>

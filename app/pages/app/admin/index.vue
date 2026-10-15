@@ -63,6 +63,12 @@ const sections = [
     description: "Shop orders to send out, with where to send them",
   },
   {
+    to: "/app/admin/messages",
+    label: "messages",
+    icon: "lucide:message-square",
+    description: "DM some people, or everyone, on Slack",
+  },
+  {
     to: "/app/admin/activity",
     label: "activity",
     icon: "lucide:chart-column",

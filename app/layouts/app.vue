@@ -1,4 +1,24 @@
 <template>
+  <!-- client only: the weekday is in the browser's timezone, which the server doesn't know -->
+  <ClientOnly>
+    <div
+      v-if="boost"
+      ref="bannerEl"
+      class="bg-black text-white px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center"
+    >
+      <p>
+        <b>ship before {{ boostWeekday }}</b> and your pixel payout gets
+        doubled (up to {{ boost.maxExtra }} extra pixels)!
+      </p>
+      <NuxtLink
+        v-if="boost.projectId"
+        :to="`/app/projects/${boost.projectId}`"
+        class="font-bold text-white!"
+      >
+        LOCK IN!!
+      </NuxtLink>
+    </div>
+  </ClientOnly>
   <div class="flex justify-center">
     <nav
       class="relative flex justify-between items-center max-w-full transition-[width] duration-500 ease-in-out"
@@ -95,9 +115,27 @@ useSeoMeta({
   title: "Canvas",
 });
 
+// The double pixels deal from the "you haven't started yet" DM, null unless it's on
+const { data: boost, refresh: refreshBoost } = useFetch("/api/me/boost", {
+  key: "boost",
+});
+const boostWeekday = computed(() =>
+  boost.value
+    ? new Date(boost.value.until).toLocaleDateString("en-US", {
+        weekday: "long",
+      })
+    : "",
+);
+
 // Pixels can change without this user doing anything (e.g. an admin gives them some),
-// so re-check on each page change
-watch(() => route.path, refreshPixels);
+// so re-check on each page change. The banner goes away once they've shipped.
+watch(
+  () => route.path,
+  () => {
+    refreshPixels();
+    refreshBoost();
+  },
+);
 
 // the canvas gets the whole screen, so the nav stretches out to match it
 const fullWidth = computed(() => route.path == "/app/canvas");
@@ -148,4 +186,25 @@ onMounted(() => {
   linksEl.value?.querySelectorAll("a").forEach((el) => observer!.observe(el));
 });
 onBeforeUnmount(() => observer?.disconnect());
+
+// Pages that fill the screen (the canvas) take the banner's height off theirs with
+// var(--banner-height). It changes when the banner wraps, so it's kept up to date.
+const bannerEl = ref<HTMLElement>();
+const bannerObserver = import.meta.client
+  ? new ResizeObserver(([entry]) =>
+      document.documentElement.style.setProperty(
+        "--banner-height",
+        `${entry?.borderBoxSize[0]?.blockSize ?? 0}px`,
+      ),
+    )
+  : undefined;
+watch(bannerEl, (el, old) => {
+  if (old) bannerObserver?.unobserve(old);
+  if (el) bannerObserver?.observe(el);
+  else document.documentElement.style.removeProperty("--banner-height");
+});
+onBeforeUnmount(() => {
+  bannerObserver?.disconnect();
+  document.documentElement.style.removeProperty("--banner-height");
+});
 </script>

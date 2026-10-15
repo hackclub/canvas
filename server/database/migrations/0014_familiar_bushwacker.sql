@@ -1,0 +1,1 @@
+ALTER TABLE "users" DROP COLUMN "coding_hours_paid";

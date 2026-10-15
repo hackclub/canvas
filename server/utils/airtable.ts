@@ -52,6 +52,19 @@ function hours(seconds: number) {
   return Math.round(seconds / 36) / 100
 }
 
+// The submitter's personal details as they're sent to Airtable: their Hack Club Auth identity
+// and primary address, and their GitHub username from Hackatime
+export async function fetchSubmitterDetails(user: Pick<typeof schema.users.$inferSelect, 'id' | 'hca' | 'hackatime'>) {
+  // Users from before the token was saved need to sign in again
+  if (!user.hca) throw new Error(`User ${user.id} has no Hack Club Auth token, they need to sign in again`)
+  const [identity, githubUsername] = await Promise.all([
+    fetchHcaIdentity(decryptToken(user.hca.access_token)),
+    user.hackatime ? fetchGithubUsername(decryptToken(user.hackatime.access_token)) : null,
+  ])
+  const address = identity.addresses?.find((a) => a.primary) ?? identity.addresses?.[0]
+  return { identity, address, githubUsername }
+}
+
 // Creates the Airtable record for an approved ship. `siteUrl` is the public origin the
 // banner is served from, since Airtable downloads attachments from a URL.
 export async function syncShipToAirtable(shipId: number, siteUrl: string) {
@@ -69,8 +82,6 @@ export async function syncShipToAirtable(shipId: number, siteUrl: string) {
     .where(eq(schema.ships.id, shipId))
   if (!row) throw new Error(`Ship ${shipId} not found`)
   const { ship, project, user } = row
-  // Users from before the token was saved need to sign in again
-  if (!user.hca) throw new Error(`User ${user.id} has no Hack Club Auth token, they need to sign in again`)
 
   // Time the project's earlier ships were already submitted with (same as payShip)
   const [previous] = await useDB()
@@ -85,12 +96,10 @@ export async function syncShipToAirtable(shipId: number, siteUrl: string) {
   const shipSeconds = ship.hackatimeSeconds ?? 0
 
   const hackatimeToken = user.hackatime ? decryptToken(user.hackatime.access_token) : undefined
-  const [identity, githubUsername, hackatimeProjects] = await Promise.all([
-    fetchHcaIdentity(decryptToken(user.hca.access_token)),
-    hackatimeToken ? fetchGithubUsername(hackatimeToken) : null,
+  const [{ identity, address, githubUsername }, hackatimeProjects] = await Promise.all([
+    fetchSubmitterDetails(user),
     hackatimeToken ? fetchHackatimeProjectDetails(hackatimeToken, project.hackatimeProjects) : [],
   ])
-  const address = identity.addresses?.find((a) => a.primary) ?? identity.addresses?.[0]
 
   const fields: Record<string, unknown> = {
     'Code URL': project.repoUrl,
@@ -119,15 +128,14 @@ export async function syncShipToAirtable(shipId: number, siteUrl: string) {
     fields['Justification - Deflation Justification'] = justification.deflationJustification
     fields['Justification - Additional Justification'] = justification.additionalJustification
   }
+  // 'Optional - Override Hours Spent Justification' is left alone: it overrides a field
+  // Airtable generates itself
   if (justification?.overrideHours != null) {
     // The reviewer's hours win over the automatic reship calculation
     fields['Optional - Override Hours Spent'] = justification.overrideHours
-    fields['Optional - Override Hours Spent Justification'] = justification.overrideHoursJustification
   } else if (previousSeconds > 0) {
     // A reship only counts the time since the project's last approved ship
     fields['Optional - Override Hours Spent'] = hours(Math.max(0, shipSeconds - previousSeconds))
-    fields['Optional - Override Hours Spent Justification']
-      = `Reship: ${hours(shipSeconds)}h total on Hackatime, minus ${hours(previousSeconds)}h already submitted in earlier ships`
   }
 
   await $fetch(`${AIRTABLE_URL}/${airtable.baseId}/${encodeURIComponent(airtable.table)}`, {
