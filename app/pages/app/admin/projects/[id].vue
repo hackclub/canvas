@@ -31,10 +31,9 @@
           Shipped {{ new Date(pendingShip.createdAt).toLocaleString()
           }}<template v-if="pendingShip.hackatimeSeconds !== null">
             with {{ formatHours(pendingShip.hackatimeSeconds) }} hours</template
-          >. Approving pays them for the hours since their last approved
-          ship. Try
-          the demo and check the project works before approving it. The project
-          is locked until you review it.
+          >. Approving pays them for the hours since their last approved ship.
+          Try the demo and check the project works before approving it. The
+          project is locked until you review it.
         </p>
         <div class="border-3 border-black">
           <button
@@ -97,9 +96,15 @@
           />
         </label>
         <label class="flex items-center gap-2 font-semibold">
-          <input v-model="cooking" type="checkbox" class="size-5 accent-black" />
+          <input
+            v-model="cooking"
+            type="checkbox"
+            class="size-5 accent-black"
+          />
           cooking
-          <span class="font-normal opacity-70">(pays 1.2x the pixels for this ship)</span>
+          <span class="font-normal opacity-70"
+            >(pays 1.2x the pixels for this ship)</span
+          >
         </label>
         <div class="space-y-3 border-t-2 border-black pt-3">
           <h3 class="font-bold">justification for the spot-checkers</h3>
@@ -128,7 +133,10 @@
               >
                 deflate
               </UiButtonSmall>
-              <label v-if="deflatePercent !== null" class="flex items-center gap-1">
+              <label
+                v-if="deflatePercent !== null"
+                class="flex items-center gap-1"
+              >
                 by
                 <input
                   v-model="deflatePercent"
@@ -147,7 +155,7 @@
             </p>
           </div>
           <label class="block">
-            <span class="font-semibold">Special technical features</span>
+            <span class="font-semibold">Specific technical features</span>
             <span class="opacity-70"> (what justifies the hours spent)</span>
             <textarea
               v-model="justification.specialTechnicalFeatures"
@@ -273,14 +281,17 @@
             </span>
           </p>
           <p v-if="ship.pixelsAwarded !== null" class="text-sm opacity-70">
-            <b v-if="ship.cooking">cooking · </b>paid {{ ship.pixelsAwarded.toLocaleString() }} pixels and
-            {{ ship.bonusPointsAwarded?.toLocaleString() }} bonus points<template
-              v-if="ship.hackatimeSeconds !== null"
-            >
+            <b v-if="ship.cooking">cooking · </b>paid
+            {{ ship.pixelsAwarded.toLocaleString() }} pixels and
+            {{ ship.bonusPointsAwarded?.toLocaleString() }} bonus
+            points<template v-if="ship.hackatimeSeconds !== null">
               for {{ formatHours(ship.hackatimeSeconds) }} hours total</template
             >
           </p>
-          <p v-if="ship.justification?.overrideHours != null" class="text-sm opacity-70">
+          <p
+            v-if="ship.justification?.overrideHours != null"
+            class="text-sm opacity-70"
+          >
             reviewed as {{ ship.justification.overrideHours }} hours
           </p>
           <p v-if="ship.feedback" class="mt-1 whitespace-pre-wrap">
