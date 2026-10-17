@@ -164,7 +164,7 @@ const types: { value: SlackMessageType; label: string; description: string }[] =
       value: "nudge",
       label: "double pixels nudge",
       description:
-        "Turns on their double pixels deal until the day after tomorrow and DMs them about it, linking their latest project. Doesn't check if they've coded. People without a project are skipped.",
+        "Turns on their double pixels deal until the end of the day after tomorrow and DMs them about it, linking their latest project. Doesn't check if they've coded. People without a project are skipped.",
     },
     {
       value: "shipApproved",

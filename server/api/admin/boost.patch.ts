@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 
-// PATCH /api/admin/boost — turns the admin's own double pixels deal on (until the day after
-// tomorrow, like the nudge DM gives) or off, without a DM. Only ever their own account.
+// PATCH /api/admin/boost — turns the admin's own double pixels deal on (until the end of the
+// day after tomorrow, like the nudge DM gives) or off, without a DM. Only ever their own account.
 export default defineEventHandler(async (event) => {
   const { user } = await requireAdmin(event)
   const body = await readBody<{ enabled?: unknown }>(event)

@@ -7,7 +7,7 @@
       class="bg-black text-white px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center"
     >
       <p>
-        <b>ship before {{ boostWeekday }}</b> and your pixel payout gets
+        <b>ship before the end of {{ boostWeekday }}</b> and your pixel payout gets
         doubled (up to {{ boost.maxExtra }} extra pixels)!
       </p>
       <NuxtLink
@@ -119,9 +119,10 @@ useSeoMeta({
 const { data: boost, refresh: refreshBoost } = useFetch("/api/me/boost", {
   key: "boost",
 });
+// The last day it covers, not the midnight it ends at
 const boostWeekday = computed(() =>
   boost.value
-    ? new Date(boost.value.until).toLocaleDateString("en-US", {
+    ? new Date(new Date(boost.value.until).getTime() - 1).toLocaleDateString("en-US", {
         weekday: "long",
       })
     : "",

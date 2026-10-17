@@ -60,7 +60,7 @@
           </h2>
           <p class="mt-1 mb-4 opacity-70">
             The deal from the "you haven't started yet" DM, on your own
-            account: ships made before the start of the day after tomorrow
+            account: ships made before the end of the day after tomorrow
             pay double pixels (up to 250 extra), with the banner above the
             navbar. No DM is sent. It turns off once a ship uses it.
           </p>

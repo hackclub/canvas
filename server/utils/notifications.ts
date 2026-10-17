@@ -206,12 +206,12 @@ function startOfDayIn(timeZone: string, days: number, from = new Date()) {
 
 // --- The ship boost (double pixels deal) ---
 
-// Turns on someone's double pixels deal until the start of the day after tomorrow where they
-// are (e.g. on a Thursday it lasts until Saturday), and logs it. Returns when it ends and the
+// Turns on someone's double pixels deal until the end of the day after tomorrow where they
+// are (e.g. on a Thursday it lasts all of Saturday), and logs it. Returns when it ends and the
 // timezone that was used.
 export async function enableShipBoost(user: { id: string, slackId: string | null }, reason: 'nudge' | 'admin', actorId: string | null) {
   const timeZone = user.slackId ? await fetchSlackTimezone(user.slackId) : 'UTC'
-  const until = startOfDayIn(timeZone, 2)
+  const until = startOfDayIn(timeZone, 3)
   await useDB().transaction(async (tx) => {
     await tx.update(schema.users).set({ shipBoostUntil: until }).where(eq(schema.users.id, user.id))
     await tx.insert(schema.botLog).values({
@@ -272,7 +272,7 @@ async function welcomeMessage(userId: string) {
 function nudgeMessage(projectId: number, weekday: string) {
   const text = "oh hello again! i noticed you haven't started working on your project yet. :c\n\n"
     + 'that said, i come with a trade offer..\n\n'
-    + `*if you ship BEFORE ${weekday}, i'll DOUBLE your pixel payout* (up to ${SHIP_BOOST_MAX} extra pixels!!)\n\n`
+    + `*if you ship BEFORE the end of ${weekday}, i'll DOUBLE your pixel payout* (up to ${SHIP_BOOST_MAX} extra pixels!!)\n\n`
     + "doesn't have to be a big project either!"
   return { text, blocks: [section(text), buttons({ text: 'LOCK IN!!', url: siteLink(`/app/projects/${projectId}`), style: 'primary' })] }
 }
@@ -280,7 +280,8 @@ function nudgeMessage(projectId: number, weekday: string) {
 // Turns on the double pixels deal and DMs them about it, linking to `projectId`
 async function sendNudge(to: Recipient, projectId: number, actorId: string | null, unsubscribe = false) {
   const { until, timeZone } = await enableShipBoost(to, 'nudge', actorId)
-  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone }).format(until)
+  // The last day it covers, not the midnight it ends at
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone }).format(new Date(until.getTime() - 1))
   return sendDM(to, 'nudge', nudgeMessage(projectId, weekday), actorId, unsubscribe)
 }
 
