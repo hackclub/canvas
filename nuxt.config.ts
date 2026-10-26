@@ -53,6 +53,11 @@ export default defineNuxtConfig({
       accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
       secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
     },
+    public: {
+      // Stops anyone from shipping, and turns off the double pixels deal (its banner and the
+      // "you haven't started yet" DMs); overridable with NUXT_PUBLIC_SHIPS_CLOSED
+      shipsClosed: process.env.SHIPS_CLOSED === 'true',
+    },
   },
 
   css: ['~/assets/css/main.css'],

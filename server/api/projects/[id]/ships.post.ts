@@ -10,6 +10,10 @@ export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const project = await requireOwnProject(event, user.id)
 
+  if (useRuntimeConfig().public.shipsClosed) {
+    throw createError({ statusCode: 403, statusMessage: 'Ship submissions are closed' })
+  }
+
   if (!isEligible(await getEligibility(user.id))) {
     throw createError({ statusCode: 403, statusMessage: 'Waiting on eligibility before you can ship' })
   }

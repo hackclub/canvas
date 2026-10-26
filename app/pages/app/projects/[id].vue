@@ -276,6 +276,7 @@
               {{ saving ? "saving..." : dirty ? "save" : "saved" }}
             </UiButtonSmall>
             <UiButtonSmall
+              v-if="!shipsClosed"
               icon="lucide:rocket"
               class="border-3 border-white"
               @click="openShip"
@@ -285,6 +286,9 @@
               }}
             </UiButtonSmall>
           </div>
+          <p v-if="shipsClosed" class="text-sm opacity-70">
+            Ship submissions are closed.
+          </p>
         </form>
       </UiCard>
     </div>
@@ -403,6 +407,7 @@ const { data: ships } = await useFetch(`/api/projects/${id}/ships`, {
 const latestShip = computed(() => ships.value[0]);
 // Projects can't be changed while they're being reviewed
 const locked = computed(() => latestShip.value?.status === "pending");
+const { shipsClosed } = useRuntimeConfig().public;
 
 // What shipping now would pay, for the time since the last paid ship. A reviewer can
 // change it, e.g. by overriding the hours or marking it as cooking.

@@ -5,6 +5,8 @@ import { and, desc, eq, lt } from 'drizzle-orm'
 // (which clears it), or while a ship made in time is waiting for review, since that one gets it.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  // Can't ship to use it
+  if (useRuntimeConfig().public.shipsClosed) return null
   const db = useDB()
   const row = await db.query.users.findFirst({
     where: eq(schema.users.id, user.id),

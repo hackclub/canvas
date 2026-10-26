@@ -378,6 +378,10 @@ export async function sendScheduledMessages() {
   const [welcomesLeft] = await db.select({ id: schema.users.id }).from(schema.users).where(welcomeDue).limit(1)
   if (welcomesLeft) return
 
+  // No nudges (or their double pixels deal) while ships are closed. Nobody's claimed, so if
+  // ships open again, everyone due one gets it then.
+  if (useRuntimeConfig().public.shipsClosed) return
+
   const nudgeDue = and(
     isNull(schema.users.nudgeCheckedAt),
     lte(schema.users.createdAt, new Date(now - NUDGE_DELAY)),
