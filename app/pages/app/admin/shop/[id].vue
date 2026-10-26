@@ -11,6 +11,9 @@
         <h1 class="mt-2 font-bold text-3xl">{{ item.name }}</h1>
         <p class="mt-1 opacity-70">
           {{ item.price.toLocaleString() }} bonus points
+          <template v-if="item.pixels !== null">
+            · gives {{ item.pixels.toLocaleString() }} pixels
+          </template>
           <template v-if="item.stock !== null">
             · {{ stockLabel(item.stock) }}
           </template>
@@ -148,6 +151,7 @@ function reset() {
     disclaimer,
     silly,
     requirePhone,
+    pixels,
     fields,
   } = item.value;
   form.value = {
@@ -162,7 +166,8 @@ function reset() {
     checkoutLimit,
     checkoutLimitEnabled,
     disclaimer,
-    silly,
+    kind: pixels !== null ? "pixels" : silly ? "silly" : "item",
+    pixels: pixels ?? "",
     requirePhone,
     // Copied, so editing the form doesn't change the saved item until it's saved
     fields: structuredClone(toRaw(fields)),

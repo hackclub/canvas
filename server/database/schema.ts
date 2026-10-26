@@ -183,7 +183,8 @@ export const canvasPixelLog = pgTable('canvas_pixel_log', {
 
 // Why a user's pixel balance changed
 // "boost" is the extra pixels for shipping before shipBoostUntil, paid with a ship (shipId is set)
-export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup' | 'referral' | 'todo' | 'boost'
+// "shop" is buying them in the shop (or losing them when the order is rejected), orderId is set
+export type PixelTransactionReason = 'canvas' | 'admin' | 'ship' | 'coding' | 'setup' | 'referral' | 'todo' | 'boost' | 'shop'
 
 // Every change to a user's pixel balance, for the admin audit log
 export const pixelTransactions = pgTable('pixel_transactions', {
@@ -198,6 +199,8 @@ export const pixelTransactions = pgTable('pixel_transactions', {
   actorId: text('actor_id').references(() => users.id, { onDelete: 'set null' }),
   // The approved ship that paid it, for reason "ship"
   shipId: integer('ship_id').references(() => ships.id, { onDelete: 'set null' }),
+  // The order that bought them, for reason "shop"
+  orderId: integer('order_id').references((): AnyPgColumn => shopOrders.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index('pixel_transactions_user_id_idx').on(t.userId),
@@ -259,6 +262,9 @@ export const shopItems = pgTable('shop_items', {
   // Orders need a phone number: if the picked address doesn't have one, checkout asks for it
   // (e.g. for carriers that need one). Doesn't apply to silly items, which take no address.
   requirePhone: boolean('require_phone').notNull().default(false),
+  // Pixels each one gives when it's bought, null for anything else. Pixel items are always
+  // silly, since there's nothing to send out.
+  pixels: integer('pixels'),
   // Questions asked at checkout, in order (see ShopItemField). Options can add to the price.
   fields: jsonb('fields').$type<ShopItemField[]>().notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -279,6 +285,9 @@ export const shopOrders = pgTable('shop_orders', {
   // What they picked for the item's fields, in the fields' order
   choices: jsonb('choices').$type<OrderChoice[]>().notNull().default([]),
   quantity: integer('quantity').notNull(),
+  // Pixels each one gave, copied from the item, null if it isn't a pixel item. Taken back if
+  // the order is rejected.
+  pixels: integer('pixels'),
   status: text('status').$type<OrderStatus>().notNull().default('pending'),
   // A ShippingAddress (shared/types/shop.ts) as JSON, encrypted with encryptToken
   // (server/utils/tokens.ts). Only ever decrypted for admins, see server/utils/orders.ts.

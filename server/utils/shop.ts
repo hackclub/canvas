@@ -20,7 +20,7 @@ const isWholeNumber = (value: unknown, min: number, max = MAX_AMOUNT): value is 
   Number.isInteger(value) && (value as number) >= min && (value as number) <= max
 
 // Fields that can be left out when creating an item, for the column's default
-type OptionalField = 'showInApp' | 'showOnLanding' | 'showQuantity' | 'perUserLimit' | 'checkoutLimit' | 'checkoutLimitEnabled' | 'disclaimer' | 'silly' | 'requirePhone' | 'fields'
+type OptionalField = 'showInApp' | 'showOnLanding' | 'showQuantity' | 'perUserLimit' | 'checkoutLimit' | 'checkoutLimitEnabled' | 'disclaimer' | 'silly' | 'requirePhone' | 'pixels' | 'fields'
 
 export interface ShopItemInput {
   name: string
@@ -36,6 +36,7 @@ export interface ShopItemInput {
   disclaimer: string
   silly: boolean
   requirePhone: boolean
+  pixels: number | null
   fields: ShopItemField[]
 }
 
@@ -97,6 +98,14 @@ export function parseShopItem(body: Record<string, unknown> | undefined, partial
     }
     item.disclaimer = disclaimer.trim()
   }
+  // Can be left out when creating, for an item that isn't pixels
+  if (body?.pixels !== undefined) {
+    const pixels = body.pixels
+    if (pixels !== null && !isWholeNumber(pixels, 1)) {
+      throw badRequest('Pixels must be a whole number of at least 1, or empty for an item that isn\'t pixels')
+    }
+    item.pixels = pixels
+  }
   if (body?.fields !== undefined) item.fields = parseShopItemFields(body.fields)
   for (const field of ['showInApp', 'showOnLanding', 'showQuantity', 'checkoutLimitEnabled', 'silly', 'requirePhone'] as const) {
     if (has(field)) {
@@ -107,6 +116,14 @@ export function parseShopItem(body: Record<string, unknown> | undefined, partial
     }
   }
   return item
+}
+
+// Pixel items have nothing to send out, so they have to be silly. `current` is the item being
+// changed, for the fields that aren't.
+export function checkPixelItem(input: Partial<ShopItemInput>, current?: { pixels: number | null, silly: boolean }) {
+  const pixels = input.pixels !== undefined ? input.pixels : current?.pixels ?? null
+  const silly = input.silly ?? current?.silly ?? false
+  if (pixels !== null && !silly) throw badRequest('Pixel items have nothing to send out, so they have to be silly')
 }
 
 // Keeps an ID the admin page sent (so answers to a field keep matching it after edits), or

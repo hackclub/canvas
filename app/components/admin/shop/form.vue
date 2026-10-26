@@ -55,22 +55,40 @@
       </label>
     </div>
 
-    <h3 class="pt-2 font-bold text-lg">checkout</h3>
-    <label class="flex items-start gap-2">
-      <input v-model="form.silly" type="checkbox" class="mt-0.5 size-5 shrink-0 accent-black" />
-      <span>
-        <span class="font-semibold">Silly item</span>
-        <span class="opacity-70">
-          (nothing gets sent out: checkout won't ask for an address, and orders
-          are marked fulfilled straight away)</span
-        >
-      </span>
+    <h3 class="pt-2 font-bold text-lg">type</h3>
+    <div class="space-y-1">
+      <label v-for="kind in kinds" :key="kind.value" class="flex items-start gap-2">
+        <input
+          v-model="form.kind"
+          type="radio"
+          :value="kind.value"
+          class="mt-0.5 size-5 shrink-0 accent-black"
+        />
+        <span>
+          <span class="font-semibold">{{ kind.label }}</span>
+          <span class="opacity-70"> ({{ kind.description }})</span>
+        </span>
+      </label>
+    </div>
+    <label v-if="form.kind === 'pixels'" class="block">
+      <span class="font-semibold">Pixels</span>
+      <span class="opacity-70"> (given for each one bought)</span>
+      <input
+        v-model.number="form.pixels"
+        type="number"
+        required
+        min="1"
+        step="1"
+        class="mt-1 block w-full border-3 border-black px-3 py-1 outline-none"
+      />
     </label>
-    <label class="flex items-start gap-2" :class="{ 'opacity-40': form.silly }">
+
+    <h3 class="pt-2 font-bold text-lg">checkout</h3>
+    <label class="flex items-start gap-2" :class="{ 'opacity-40': form.kind !== 'item' }">
       <input
         v-model="form.requirePhone"
         type="checkbox"
-        :disabled="form.silly"
+        :disabled="form.kind !== 'item'"
         class="mt-0.5 size-5 shrink-0 accent-black"
       />
       <span>
@@ -174,7 +192,10 @@ export interface ShopItemForm {
   checkoutLimit: number | "";
   checkoutLimitEnabled: boolean;
   disclaimer: string;
-  silly: boolean;
+  // Silly and pixel items have nothing to send out (pixel items are saved as silly)
+  kind: "item" | "silly" | "pixels";
+  // Only for pixel items, empty until it's filled in
+  pixels: number | "";
   requirePhone: boolean;
   fields: ShopItemFieldForm[];
 }
@@ -182,4 +203,24 @@ export interface ShopItemForm {
 const form = defineModel<ShopItemForm>({ required: true });
 defineProps<{ saving: boolean; error: string; submitLabel: string }>();
 const emit = defineEmits<{ submit: [] }>();
+
+const kinds = [
+  {
+    value: "item",
+    label: "Item",
+    description: "sent out to the address picked at checkout",
+  },
+  {
+    value: "silly",
+    label: "Silly item",
+    description:
+      "nothing gets sent out: checkout won't ask for an address, and orders are marked fulfilled straight away",
+  },
+  {
+    value: "pixels",
+    label: "Pixels",
+    description:
+      "buys pixels for the canvas, given straight away like a silly item. Rejecting the order takes them back",
+  },
+] as const;
 </script>

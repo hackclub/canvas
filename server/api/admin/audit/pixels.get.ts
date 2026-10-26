@@ -2,8 +2,8 @@ import { and, count, desc, eq, gt, ilike, lt, or, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 
 // GET /api/admin/audit/pixels?q=&direction=increased|decreased&page=1 — pixel balance
-// changes, newest first. Searches the user, the admin who made the change, the reason and
-// the project of the ship that paid it.
+// changes, newest first. Searches the user, the admin who made the change, the reason, the
+// project of the ship that paid it and the item of the order that bought them.
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   const { query, q, page, offset } = getAuditQuery(event)
@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
       userMatches(actor, q),
       ilike(schema.pixelTransactions.reason, `%${escapeLike(q)}%`),
       ilike(schema.projects.name, `%${escapeLike(q)}%`),
+      ilike(schema.shopOrders.itemName, `%${escapeLike(q)}%`),
     )!)
   }
 
@@ -32,12 +33,14 @@ export default defineEventHandler(async (event) => {
         user: { id: schema.users.id, identity: schema.users.identity },
         actor: { id: actor.id, identity: actor.identity },
         project: { id: schema.projects.id, name: schema.projects.name },
+        order: { id: schema.shopOrders.id, itemName: schema.shopOrders.itemName },
       })
       .from(schema.pixelTransactions)
       .innerJoin(schema.users, eq(schema.users.id, schema.pixelTransactions.userId))
       .leftJoin(actor, eq(actor.id, schema.pixelTransactions.actorId))
       .leftJoin(schema.ships, eq(schema.ships.id, schema.pixelTransactions.shipId))
       .leftJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
+      .leftJoin(schema.shopOrders, eq(schema.shopOrders.id, schema.pixelTransactions.orderId))
       .where(and(...where))
       .orderBy(desc(schema.pixelTransactions.id))
       .limit(AUDIT_PAGE_SIZE)
@@ -49,6 +52,7 @@ export default defineEventHandler(async (event) => {
       .leftJoin(actor, eq(actor.id, schema.pixelTransactions.actorId))
       .leftJoin(schema.ships, eq(schema.ships.id, schema.pixelTransactions.shipId))
       .leftJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
+      .leftJoin(schema.shopOrders, eq(schema.shopOrders.id, schema.pixelTransactions.orderId))
       .where(and(...where)),
   ])
   return { items, total: total!.count, page, pageSize: AUDIT_PAGE_SIZE }

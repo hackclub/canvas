@@ -1,9 +1,10 @@
 // POST /api/admin/shop { name, description, price, stock, showInApp?, showOnLanding?, showQuantity?, perUserLimit?,
-// checkoutLimit?, checkoutLimitEnabled?, disclaimer?, silly?, requirePhone?, fields? } — adds a shop item.
+// checkoutLimit?, checkoutLimitEnabled?, disclaimer?, silly?, requirePhone?, pixels?, fields? } — adds a shop item.
 // The banner is uploaded separately, with PUT /api/admin/shop/:id/banner.
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const input = parseShopItem(await readBody(event))
+  checkPixelItem(input)
 
   const item = await useDB().transaction(async (tx) => {
     const [item] = await tx.insert(schema.shopItems).values(input).returning()

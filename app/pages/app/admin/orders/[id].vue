@@ -41,7 +41,11 @@
             reject
           </UiButtonSmall>
           <p v-if="order.status === 'rejected'" class="opacity-70">
-            Rejected, and their bonus points were given back.
+            Rejected, and their bonus points were given back<template
+              v-if="order.pixels !== null"
+            >
+              (and their pixels taken back)</template
+            >.
           </p>
         </div>
         <p v-if="error" class="mt-2 text-red-400">{{ error }}</p>
@@ -50,7 +54,12 @@
       <div class="grid gap-4 md:grid-cols-2 items-start">
         <div v-if="!order.address" class="border-4 border-black p-5">
           <h2 class="font-bold text-xl">nothing to send</h2>
-          <p class="mt-2 opacity-70">
+          <p v-if="order.pixels !== null" class="mt-2 opacity-70">
+            This was pixels, so there's no address. They got
+            {{ pixelsTotal.toLocaleString() }} pixels and it was fulfilled as
+            soon as it was ordered.
+          </p>
+          <p v-else class="mt-2 opacity-70">
             This was a silly item, so there's no address and it was fulfilled
             as soon as it was ordered.
           </p>
@@ -82,6 +91,10 @@
       <b>{{ userName }}</b> will get their
       <b>{{ total.toLocaleString() }} bonus points</b> back, and the stock will
       be put back. This can't be undone.
+    </p>
+    <p v-if="order?.pixels != null">
+      The <b>{{ pixelsTotal.toLocaleString() }} pixels</b> they got will be
+      taken back, so this only works if they haven't spent them yet.
     </p>
     <div class="flex gap-2">
       <UiButtonSmall
@@ -129,6 +142,10 @@ const total = computed(() =>
   order.value ? order.value.price * order.value.quantity : 0,
 );
 
+const pixelsTotal = computed(() =>
+  order.value?.pixels != null ? order.value.pixels * order.value.quantity : 0,
+);
+
 const details = computed(() => {
   const o = order.value!;
   return [
@@ -148,6 +165,9 @@ const details = computed(() => {
       value: `${o.price.toLocaleString()} bonus points`,
     },
     { label: "Total", value: `${total.value.toLocaleString()} bonus points` },
+    ...(o.pixels !== null
+      ? [{ label: "Pixels given", value: pixelsTotal.value.toLocaleString() }]
+      : []),
     {
       label: "Ordered by",
       value: userName.value,

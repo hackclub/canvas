@@ -1,8 +1,9 @@
-import { and, eq, isNotNull, sql } from 'drizzle-orm'
+import { and, eq, gte, isNotNull, sql } from 'drizzle-orm'
 
 // PATCH /api/admin/orders/:id { status } — marks a shop order as fulfilled, back to pending
 // (not for silly items), or rejected. Rejecting gives the user their bonus points back and
-// puts the stock back, so it's final: a rejected order can't be changed again.
+// puts the stock back, so it's final: a rejected order can't be changed again. For pixel
+// items it takes the pixels back too, so it's refused if they've already spent them.
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const id = getOrderId(event)
@@ -49,6 +50,26 @@ export default defineEventHandler(async (event) => {
         actorId: me.id,
         orderId: order.id,
       })
+      if (order.pixels !== null) {
+        const pixels = order.pixels * order.quantity
+        const [taken] = await tx
+          .update(schema.users)
+          .set({ pixels: sql`${schema.users.pixels} - ${pixels}` })
+          .where(and(eq(schema.users.id, order.userId), gte(schema.users.pixels, pixels)))
+          .returning({ pixels: schema.users.pixels })
+        // Throwing rolls back the refund above too
+        if (!taken) {
+          throw createError({ statusCode: 400, statusMessage: "They've already spent the pixels from this order, so it can't be rejected" })
+        }
+        await tx.insert(schema.pixelTransactions).values({
+          userId: order.userId,
+          amount: -pixels,
+          balance: taken.pixels,
+          reason: 'shop',
+          actorId: me.id,
+          orderId: order.id,
+        })
+      }
       if (order.itemId !== null) {
         await tx
           .update(schema.shopItems)

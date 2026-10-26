@@ -62,6 +62,7 @@ export const orderColumns = {
   itemName: schema.shopOrders.itemName,
   price: schema.shopOrders.price,
   quantity: schema.shopOrders.quantity,
+  pixels: schema.shopOrders.pixels,
   choices: schema.shopOrders.choices,
   status: schema.shopOrders.status,
   createdAt: schema.shopOrders.createdAt,

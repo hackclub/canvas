@@ -25,6 +25,9 @@
               <h1 class="font-bold text-3xl">{{ item.name }}</h1>
               <p class="opacity-60">
                 {{ item.price.toLocaleString() }} bonus points
+                <template v-if="item.pixels !== null">
+                  · gives {{ item.pixels.toLocaleString() }} pixels
+                </template>
                 <template v-if="item.stock !== null">
                   · {{ stockLabel(item.stock) }}
                 </template>
@@ -48,7 +51,13 @@
             <h2 class="flex items-center gap-2 font-bold text-2xl">
               <Icon name="lucide:party-popper" /> order placed!
             </h2>
-            <template v-if="placed.status === 'fulfilled'">
+            <template v-if="placed.pixels !== undefined">
+              <p>
+                You got <b>{{ placed.pixels.toLocaleString() }} pixels</b>, go
+                paint something! Your order number is <b>#{{ placed.id }}</b>.
+              </p>
+            </template>
+            <template v-else-if="placed.status === 'fulfilled'">
               <p>
                 <b>{{ item.name }}</b> is all yours! Your order number is
                 <b>#{{ placed.id }}</b>.
@@ -444,14 +453,17 @@ const blocker = computed(() => {
 
 const placing = ref(false);
 const error = ref("");
-const placed = ref<{ id: number; status: OrderStatus } | null>(null);
+// pixels is how many a pixel item just gave
+const placed = ref<{ id: number; status: OrderStatus; pixels?: number } | null>(
+  null,
+);
 
 async function placeOrder() {
   if (blocker.value) return;
   placing.value = true;
   error.value = "";
   try {
-    placed.value = await $fetch(`/api/shop/${id}/order`, {
+    const order = await $fetch(`/api/shop/${id}/order`, {
       method: "POST",
       body: {
         quantity: orderQuantity.value,
@@ -462,6 +474,14 @@ async function placeOrder() {
         ),
       },
     });
+    placed.value = {
+      id: order.id,
+      status: order.status,
+      pixels:
+        item.value.pixels !== null
+          ? item.value.pixels * (orderQuantity.value as number)
+          : undefined,
+    };
     quantity.value = 1;
     await Promise.all([refresh(), refreshPixels()]);
     // After the refresh, in case the item's fields changed

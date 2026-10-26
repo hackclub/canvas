@@ -11,7 +11,8 @@ function badRequest(statusMessage: string) {
 // with bonus points, shipped to one of the user's Hack Club Auth addresses (by its ID there).
 // phoneNumber is for items that need one when the address has none. choices is what they
 // picked for the item's fields ({ fieldId: optionId }), which can add to the price. Silly
-// items don't take an address, and their orders are fulfilled straight away.
+// items don't take an address, and their orders are fulfilled straight away. Pixel items
+// (which are always silly) give their pixels as soon as they're bought.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
   const itemId = Number(getRouterParam(event, 'id'))
@@ -87,7 +88,8 @@ export default defineEventHandler(async (event) => {
     const { choices, extra } = parseChoices(item.fields, body?.choices)
     const unitPrice = item.price + extra
     const total = unitPrice * quantity
-    if (total > MAX_TOTAL) throw badRequest("That's too many!")
+    const pixels = item.pixels === null ? 0 : item.pixels * quantity
+    if (total > MAX_TOTAL || pixels > MAX_TOTAL) throw badRequest("That's too many!")
 
     // Only goes through if they can afford it, checked in the same statement so two orders
     // at once can't both spend the same points
@@ -113,6 +115,7 @@ export default defineEventHandler(async (event) => {
         price: unitPrice,
         choices,
         quantity,
+        pixels: item.pixels,
         status: item.silly ? 'fulfilled' : 'pending',
         address: address && !item.silly ? encryptAddress(address) : null,
       })
@@ -124,6 +127,21 @@ export default defineEventHandler(async (event) => {
       reason: 'shop',
       orderId: order!.id,
     })
+
+    if (pixels) {
+      const [updated] = await tx
+        .update(schema.users)
+        .set({ pixels: sql`${schema.users.pixels} + ${pixels}` })
+        .where(eq(schema.users.id, user.id))
+        .returning({ pixels: schema.users.pixels })
+      await tx.insert(schema.pixelTransactions).values({
+        userId: user.id,
+        amount: pixels,
+        balance: updated!.pixels,
+        reason: 'shop',
+        orderId: order!.id,
+      })
+    }
 
     setResponseStatus(event, 201)
     return { id: order!.id, status: order!.status, bonusPoints: me.bonusPoints }

@@ -33,6 +33,8 @@ export default defineEventHandler(async (event) => {
       disclaimer: item.disclaimer,
       silly: item.silly,
       requirePhone: item.requirePhone,
+      // Pixels each one gives, null if it isn't a pixel item
+      pixels: item.pixels,
       fields: item.fields,
     },
     bonusPoints: me?.bonusPoints ?? 0,

@@ -77,7 +77,14 @@
               <span v-else class="italic">a deleted project</span>
             </template>
             <template v-else-if="t.reason === 'shop'">
-              {{ t.amount < 0 ? "— ordered" : "— refunded for" }}
+              <!-- pixels come in when ordered and go back out if it's rejected -->
+              {{
+                (kind === "pixels") === t.amount > 0
+                  ? "— ordered"
+                  : kind === "pixels"
+                    ? "— taken back for rejected"
+                    : "— refunded for"
+              }}
               <NuxtLink
                 v-if="t.order"
                 :to="`/app/admin/orders/${t.order.id}`"

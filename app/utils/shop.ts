@@ -14,7 +14,8 @@ export function emptyShopItemForm(): ShopItemForm {
     checkoutLimit: 1,
     checkoutLimitEnabled: false,
     disclaimer: "",
-    silly: false,
+    kind: "item",
+    pixels: "",
     requirePhone: false,
     fields: [],
   };
@@ -35,7 +36,8 @@ export function shopItemBody(form: ShopItemForm) {
     checkoutLimit: form.checkoutLimit === "" ? undefined : form.checkoutLimit,
     checkoutLimitEnabled: form.checkoutLimitEnabled,
     disclaimer: form.disclaimer,
-    silly: form.silly,
+    silly: form.kind !== "item",
+    pixels: form.kind === "pixels" && form.pixels !== "" ? form.pixels : null,
     requirePhone: form.requirePhone,
     fields: form.fields.map((field) => ({
       ...field,
