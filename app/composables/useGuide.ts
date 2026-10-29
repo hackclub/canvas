@@ -27,7 +27,11 @@ export function useGuide() {
   });
 
   const step = computed(() => state.value?.step ?? null);
-  const config = computed(() => (step.value ? GUIDE_STEPS[step.value] : null));
+  const { canvasClosed } = useRuntimeConfig().public;
+  const config = computed(() => {
+    const c = step.value ? GUIDE_STEPS[step.value] : null;
+    return c?.ifCanvasClosed && canvasClosed ? { ...c, lines: c.ifCanvasClosed } : c;
+  });
   const path = computed(() =>
     state.value ? pathFor(state.value.step, state.value.projectId) : null,
   );

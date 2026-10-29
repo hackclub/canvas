@@ -161,6 +161,12 @@
           </UiButtonSmall>
         </div>
       </template>
+      <p
+        v-else-if="canvasClosed"
+        class="bg-black px-3 py-1 text-sm font-bold text-white"
+      >
+        the canvas is closed, thanks for drawing!
+      </p>
       <UiButtonSmall
         v-else
         data-guide="draw"
@@ -173,7 +179,9 @@
         {{
           editing
             ? "click or drag to draw · right-click drag or hold space to move · ctrl+z to undo · enter to confirm"
-            : "drag to move · scroll to zoom · click a pixel to see who drew it · press draw (or 1–9) to start drawing"
+            : canvasClosed
+              ? "drag to move · scroll to zoom · click a pixel to see who drew it"
+              : "drag to move · scroll to zoom · click a pixel to see who drew it · press draw (or 1–9) to start drawing"
         }}
       </p>
     </div>
@@ -187,6 +195,8 @@ const MAX_SCALE = 64;
 
 const { pixels, pending, setPixels } = usePixels();
 const guide = useGuide();
+// Nobody can draw anymore, so there's no getting into edit mode
+const { canvasClosed } = useRuntimeConfig().public;
 
 const viewportEl = ref<HTMLDivElement>();
 const screenEl = ref<HTMLCanvasElement>();
@@ -814,6 +824,8 @@ function onKeyDown(e: KeyboardEvent) {
     discard();
   } else if (e.key === "Escape") {
     inspected.value = null;
+  } else if (canvasClosed) {
+    return;
   } else if (key === "e") {
     editing.value = true;
     tool.value = "eraser";

@@ -57,6 +57,9 @@ export default defineNuxtConfig({
       // Stops anyone from shipping, and turns off the double pixels deal (its banner and the
       // "you haven't started yet" DMs); overridable with NUXT_PUBLIC_SHIPS_CLOSED
       shipsClosed: process.env.SHIPS_CLOSED === 'true',
+      // Stops anyone from placing pixels, the canvas can still be looked at; overridable with
+      // NUXT_PUBLIC_CANVAS_CLOSED
+      canvasClosed: process.env.CANVAS_CLOSED === 'true',
     },
   },
 

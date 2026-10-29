@@ -9,6 +9,9 @@ function badRequest(statusMessage: string) {
 // balance and any pixels that weren't drawn because the user ran out.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  if (useRuntimeConfig().public.canvasClosed) {
+    throw createError({ statusCode: 403, statusMessage: 'The canvas is closed' })
+  }
   const body = await readBody<{ pixels?: unknown }>(event)
 
   const list = body?.pixels

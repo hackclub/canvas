@@ -39,6 +39,8 @@ export interface GuideLine {
 export interface GuideStepConfig {
   speaker: string;
   lines: GuideLine[];
+  // Shown instead of `lines` once the canvas is closed (CANVAS_CLOSED) and nobody can draw
+  ifCanvasClosed?: GuideLine[];
   // Where the dialogue box sits, so it stays out of the way of what's being highlighted
   position: "top" | "bottom";
   // Label of the button on the last line, for steps that end with a button instead of the player
@@ -153,6 +155,16 @@ export const GUIDE_STEPS: Record<GuideStep, GuideStepConfig> = {
         },
       },
     ],
+    ifCanvasClosed: [
+      {
+        text: "**this is the shared canvas!** after the event, the end result gets put up at **hack club hq** and sent out as *posters* & *postcards*!",
+      },
+      {
+        text: "the canvas is closed now, so there's no more drawing on it. press skip to continue.",
+        interact: true,
+        skip: "shop",
+      },
+    ],
     position: "top",
   },
   // On the shop page
@@ -160,6 +172,15 @@ export const GUIDE_STEPS: Record<GuideStep, GuideStepConfig> = {
     speaker: "pixel orpheus",
     lines: [
       { text: "great first pixels! this is the *shop*." },
+      {
+        text: "**ship projects** to earn *bonus points* and trade them for prizes here.",
+      },
+      {
+        text: "prizes? yeah! we're **actually** sending you free stuff. aint that crazy.",
+      },
+    ],
+    ifCanvasClosed: [
+      { text: "this is the *shop*." },
       {
         text: "**ship projects** to earn *bonus points* and trade them for prizes here.",
       },
