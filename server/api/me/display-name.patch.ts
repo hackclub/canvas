@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 // user's Slack display name. Empty or null clears it, going back to the Slack name.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  await rateLimit(event, 'profile', 30, MINUTE)
   const body = await readBody<{ displayNameOverride?: unknown }>(event)
   const value = body?.displayNameOverride
 

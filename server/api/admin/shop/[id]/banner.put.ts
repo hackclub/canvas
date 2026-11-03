@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const { user: me } = await requireAdmin(event)
   const item = await requireShopItem(event)
+  await rateLimit(event, 'upload', 30, HOUR)
   const image = await readBannerUpload(event)
 
   // A fresh key per upload, so /images/<key> can be cached forever

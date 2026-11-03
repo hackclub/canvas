@@ -15,6 +15,8 @@ function badRequest(statusMessage: string) {
 // (which are always silly) give their pixels as soon as they're bought.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  // Orders for items that ship also go to Hack Club Auth for the address
+  await rateLimit(event, 'order', 20, MINUTE)
   const itemId = Number(getRouterParam(event, 'id'))
   if (!Number.isSafeInteger(itemId)) throw createError({ statusCode: 404, statusMessage: 'Shop item not found' })
   const body = await readBody<{ quantity?: unknown, addressId?: unknown, phoneNumber?: unknown, choices?: unknown }>(event)

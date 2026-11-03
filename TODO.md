@@ -66,15 +66,19 @@
 
 - [ ] landing page
 
-- [ ] security audit
-  - make sure any admin routes are only accessible to admins
-  - make absolutely sure any calls to PII can only be done by users themselves or if needed admins
-  - make absolutely sure people cant get free pixels or bonus points
-  - make sure people cant get shop items without bonus points
-  - make sure people cant paint on the canvas without pixels
-  - make sure everything is properly scoped
-  - sort out vulnerabilities
-  - rate limits
+- [x] security audit
+  - [x] make sure any admin routes are only accessible to admins
+  - [x] make absolutely sure any calls to PII can only be done by users themselves or if needed admins
+  - [x] make absolutely sure people cant get free pixels or bonus points
+    - known gap: renaming a Hackatime project after it's been paid for makes it look like a new
+      one, so a second Canvas project could ship the same hours. Needs Hackatime project IDs (or a
+      cap of total paid hours against total Hackatime hours) to close; reviewers see the project
+      names and date ranges in Airtable in the meantime
+  - [x] make sure people cant get shop items without bonus points
+  - [x] make sure people cant paint on the canvas without pixels
+  - [x] make sure everything is properly scoped
+  - [x] sort out vulnerabilities
+  - [x] rate limits (server/utils/rateLimit.ts, server/middleware/hardening.ts)
 
 - [ ] finish docker container
   - it should host the nuxt app as well

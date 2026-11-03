@@ -3,6 +3,8 @@
 // number, for items that need one): orders look the full address up again on the server by ID.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  // Each call goes to Hack Club Auth
+  await rateLimit(event, 'hca', 20, MINUTE)
   const addresses = await fetchHcaAddresses(user.id)
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
   return addresses.map((a) => ({

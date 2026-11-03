@@ -4,6 +4,8 @@ import { eq } from 'drizzle-orm'
 // Canvas project it's linked to (if any). `linked` is false if Hackatime isn't linked.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  // Each call goes to Hackatime
+  await rateLimit(event, 'hackatime', 30, MINUTE)
   const hackatimeProjects = await getHackatimeProjects(user.id)
   if (!hackatimeProjects) {
     return { linked: false, projects: [] }

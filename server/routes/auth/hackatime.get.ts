@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, ne } from 'drizzle-orm'
+import { and, eq, isNotNull, ne, or } from 'drizzle-orm'
 
 // GET /auth/hackatime — links a Hackatime account (https://hackatime.hackclub.com/docs/oauth/oauth-apps)
 // Not a sign-in method: the user must already be signed in with Hack Club Auth.
@@ -37,6 +37,7 @@ function isUniqueViolation(error: unknown) {
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  await rateLimit(event, 'oauth', 30, MINUTE)
 
   const { hackatime } = useRuntimeConfig(event)
   const { code, state, error, return_to } = getQuery(event)
@@ -116,16 +117,21 @@ export default defineEventHandler(async (event) => {
   })
   const switching = !!current?.hackatimeId && current.hackatimeId !== me.id
   if (switching) {
+    // A pending ship counts too: its hours (from the old account) get paid when it's approved,
+    // and the old account would be free for another Canvas account to link and ship again
     const [paid] = await db
       .select({ id: schema.ships.id })
       .from(schema.ships)
       .innerJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
-      .where(and(eq(schema.projects.userId, user.id), isNotNull(schema.ships.pixelsAwarded)))
+      .where(and(
+        eq(schema.projects.userId, user.id),
+        or(isNotNull(schema.ships.pixelsAwarded), eq(schema.ships.status, 'pending')),
+      ))
       .limit(1)
     if (paid || current!.codingQuartersPaid > 0) {
       throw createError({
         statusCode: 409,
-        statusMessage: "You've already been paid for time from another Hackatime account, so it can't be changed",
+        statusMessage: "You've already been paid (or are waiting to be paid) for time from another Hackatime account, so it can't be changed",
       })
     }
   }
@@ -154,6 +160,8 @@ export default defineEventHandler(async (event) => {
     .update(schema.projects)
     .set({ hackatimeId: me.id })
     .where(eq(schema.projects.userId, user.id))
+  // Totals cached from the old account would otherwise set the new one's baselines
+  if (switching) forgetHackatimeTotals(user.id)
 
   return sendRedirect(event, returnPage)
 })

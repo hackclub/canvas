@@ -12,6 +12,9 @@ export default defineEventHandler(async (event) => {
   if (useRuntimeConfig().public.canvasClosed) {
     throw createError({ statusCode: 403, statusMessage: 'The canvas is closed' })
   }
+  // The canvas page sends one request at a time and waits for it, so this is only ever hit
+  // by scripts
+  await rateLimit(event, 'canvas', 120, MINUTE)
   const body = await readBody<{ pixels?: unknown }>(event)
 
   const list = body?.pixels

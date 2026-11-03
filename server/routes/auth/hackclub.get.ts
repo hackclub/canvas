@@ -16,6 +16,8 @@ interface MeResponse {
 }
 
 export default defineEventHandler(async (event) => {
+  // Nobody's signed in yet, so by IP. Covers both the redirect out and the code exchange.
+  rateLimitByIp(event, 'oauth', 30, MINUTE)
   const { hca } = useRuntimeConfig(event)
   const { code, state, error, login_hint: loginHint } = getQuery(event)
   const redirectUri = new URL('/auth/hackclub', getRequestURL(event)).href

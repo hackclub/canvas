@@ -7,6 +7,7 @@ const SETUP_REWARD_PIXELS = 3
 // `rewarded` is true when this was their first one and they got pixels for it.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  await rateLimit(event, 'project-create', 20, HOUR)
   const body = await readBody<{ name?: unknown }>(event)
   const name = parseProjectName(body?.name)
 

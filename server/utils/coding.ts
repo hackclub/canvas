@@ -13,6 +13,15 @@ type Totals = Record<string, number>
 const lastSync = new Map<string, { at: number, totals: Totals | null }>()
 const inFlight = new Map<string, Promise<Totals | null>>()
 
+// Drops what's cached for a user, for when they link a different Hackatime account
+export function forgetHackatimeTotals(userId: string) {
+  lastSync.delete(userId)
+}
+
+// Hackatime project names are used as keys of plain objects (totals, baselines, codingSeen), so
+// a project called "constructor" or "toString" would be found by `in` without ever being set
+const has = (record: Record<string, number>, key: string) => Object.hasOwn(record, key)
+
 // Total seconds of each of the user's Hackatime projects by name, or null if Hackatime
 // isn't linked or can't be reached
 function hackatimeTotals(userId: string): Promise<Totals | null> {
@@ -85,7 +94,7 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
     const baselines = { ...row.baselines }
     let baselinesChanged = false
     for (const name of linked) {
-      if (name in totals && !(name in baselines)) {
+      if (has(totals, name) && !has(baselines, name)) {
         baselines[name] = totals[name]!
         baselinesChanged = true
       }
@@ -97,8 +106,9 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
     let coded = 0
     let linkedSeconds = 0
     for (const name of linked) {
-      if (name in totals) linkedSeconds += totals[name]!
-      if (name in baselines && name in totals) coded += Math.max(0, totals[name]! - baselines[name]!)
+      if (!has(totals, name)) continue
+      linkedSeconds += totals[name]!
+      if (has(baselines, name)) coded += Math.max(0, totals[name]! - baselines[name]!)
     }
 
     // Time that came in since the last look, on projects that were already linked then (a
@@ -106,9 +116,9 @@ export async function syncCodingPixels(userId: string): Promise<CodingProgress |
     const seen: Record<string, number> = {}
     let newSeconds = 0
     for (const name of linked) {
-      if (!(name in totals)) continue
+      if (!has(totals, name)) continue
       seen[name] = totals[name]!
-      if (name in row.seen) newSeconds += Math.max(0, totals[name]! - row.seen[name]!)
+      if (has(row.seen, name)) newSeconds += Math.max(0, totals[name]! - row.seen[name]!)
     }
     await tx.update(schema.users)
       .set({ linkedSecondsSeen: Math.round(linkedSeconds), codingSeen: seen })

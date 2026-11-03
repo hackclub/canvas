@@ -8,6 +8,7 @@ const MIN_UPDATE_SECONDS = 30 * 60
 // The project is locked from edits until the ship is reviewed.
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  await rateLimit(event, 'ship', 10, HOUR)
   const project = await requireOwnProject(event, user.id)
 
   if (useRuntimeConfig().public.shipsClosed) {
@@ -24,7 +25,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // Saved with the ship, so it's paid for the time it was shipped with, not time logged
-  // while it waits in the queue
+  // while it waits in the queue (a call to Hackatime each time)
+  await rateLimit(event, 'hackatime', 30, MINUTE)
   const hackatimeSeconds = await getProjectHackatimeSeconds(user.id, project.hackatimeProjects)
   if (hackatimeSeconds === null) {
     throw createError({ statusCode: 400, statusMessage: 'Link Hackatime before shipping' })

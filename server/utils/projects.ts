@@ -8,6 +8,7 @@ const MAX_NAME_LENGTH = 100
 const MAX_TEXT_LENGTH = 5000
 const MAX_HACKATIME_PROJECTS = 100
 const MAX_HACKATIME_NAME_LENGTH = 255
+const MAX_URL_LENGTH = 2048
 
 // Every project column except the owner's Hackatime ID, which is only for use outside
 // Canvas. Use this for any select or returning() that goes back to the browser.
@@ -76,7 +77,7 @@ export function parseProjectUrl(value: unknown, field: string) {
   if (value === null || value === '') {
     return null
   }
-  if (typeof value === 'string') {
+  if (typeof value === 'string' && value.length <= MAX_URL_LENGTH) {
     try {
       const url = new URL(value.trim())
       if (url.protocol === 'https:' || url.protocol === 'http:') {

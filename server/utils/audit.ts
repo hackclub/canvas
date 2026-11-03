@@ -7,6 +7,8 @@ type DB = ReturnType<typeof useDB>
 type Tx = Parameters<Parameters<DB['transaction']>[0]>[0]
 
 export const AUDIT_PAGE_SIZE = 50
+// Longest search, so a huge ?q= can't be turned into a huge ILIKE pattern
+const MAX_QUERY_LENGTH = 200
 
 // Records something an admin did. Pass the transaction the change was made in.
 export async function logAdminAction(
@@ -27,7 +29,7 @@ export async function logAdminAction(
 // Reads ?q= and ?page= for the audit log routes. Pages start at 1.
 export function getAuditQuery(event: H3Event) {
   const query = getQuery(event)
-  const q = typeof query.q === 'string' ? query.q.trim() : ''
+  const q = typeof query.q === 'string' ? query.q.trim().slice(0, MAX_QUERY_LENGTH) : ''
   const page = Math.max(1, Math.floor(Number(query.page)) || 1)
   return { query, q, page, offset: (page - 1) * AUDIT_PAGE_SIZE }
 }

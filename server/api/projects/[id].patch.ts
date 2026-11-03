@@ -5,6 +5,7 @@ type ProjectUpdate = Partial<typeof schema.projects.$inferInsert>
 // PATCH /api/projects/:id — updates whichever fields are in the body
 export default defineEventHandler(async (event) => {
   const { user } = await requireUserSession(event)
+  await rateLimit(event, 'project-edit', 60, MINUTE)
   const project = await requireOwnProject(event, user.id)
   await requireNotShipping(project.id)
   const body = (await readBody<Record<string, unknown>>(event)) ?? {}
@@ -25,7 +26,8 @@ export default defineEventHandler(async (event) => {
   if ('hackatimeProjects' in body) {
     const names = parseHackatimeProjectNames(body.hackatimeProjects)
     if (names.length) {
-      // Only allow the user's own Hackatime projects
+      // Only allow the user's own Hackatime projects (a call to Hackatime each time)
+      await rateLimit(event, 'hackatime', 30, MINUTE)
       const hackatimeProjects = await getHackatimeProjects(user.id, { all: true })
       if (!hackatimeProjects) {
         throw createError({ statusCode: 400, statusMessage: 'Link Hackatime before adding Hackatime projects' })
