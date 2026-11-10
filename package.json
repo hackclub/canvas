@@ -23,7 +23,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "aws4fetch": "^1.0.20",
     "drizzle-orm": "^0.45.3",
-    "nuxt": "^4.6.0",
+    "nuxt": "^4.6.2",
     "nuxt-auth-utils": "^0.5.30",
     "postgres": "^3.4.9",
     "sharp": "^0.35.5",
