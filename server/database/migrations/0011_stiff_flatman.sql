@@ -1,1 +1,0 @@
-ALTER TABLE "users" ADD COLUMN "todo_rewarded_at" timestamp with time zone;

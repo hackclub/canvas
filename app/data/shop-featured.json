@@ -1,0 +1,82 @@
+[
+  {
+    "id": 3,
+    "name": "canvas postcard",
+    "bannerKey": "shop/3/09417ceb-e262-40ab-8d1c-d97015d61049.webp"
+  },
+  {
+    "id": 7,
+    "name": "rubber duck",
+    "bannerKey": "shop/7/e9040025-418a-4f5d-ac37-80097be0e914.webp"
+  },
+  {
+    "id": 10,
+    "name": "aseprite license",
+    "bannerKey": "shop/10/3191efab-9f91-42d9-bc83-85bcbd27ec05.webp"
+  },
+  {
+    "id": 16,
+    "name": "logitech desk mat",
+    "bannerKey": "shop/16/a5f6b146-efe8-4901-b026-bbf0f7b475eb.webp"
+  },
+  {
+    "id": 12,
+    "name": "digital calipers",
+    "bannerKey": "shop/12/5164fcc6-71cb-4e46-931c-8fa1f05c5593.webp"
+  },
+  {
+    "id": 8,
+    "name": "drawing tablet",
+    "bannerKey": "shop/8/9af90904-0763-4dc7-9e26-2d599cb14c3a.webp"
+  },
+  {
+    "id": 2,
+    "name": "blahaj",
+    "bannerKey": "shop/2/cbeb807d-8ce3-498a-a6ff-56e04b8e4c46.webp"
+  },
+  {
+    "id": 4,
+    "name": "canvas poster",
+    "bannerKey": "shop/4/d073a75b-ccff-4197-972a-7ece0608fea7.webp"
+  },
+  {
+    "id": 15,
+    "name": "apple pencil",
+    "bannerKey": "shop/15/6e41ffab-2b42-4316-bd35-e923d6bbedeb.webp"
+  },
+  {
+    "id": 17,
+    "name": "polaroid go",
+    "bannerKey": "shop/17/9214da8c-dc8b-4a14-8a7b-da4891b2fd8e.webp"
+  },
+  {
+    "id": 13,
+    "name": "munbyn mc240 printer",
+    "bannerKey": "shop/13/8447dafe-7d02-4984-b6c8-98fc533628aa.webp"
+  },
+  {
+    "id": 11,
+    "name": "mx master 3s",
+    "bannerKey": "shop/11/ca4ea6fd-979d-4318-9afc-388236e1f1d7.webp"
+  },
+  {
+    "id": 5,
+    "name": "$150 monitor grant",
+    "bannerKey": "shop/5/51abe172-c262-4b72-b073-43e8109fb228.webp"
+  },
+  {
+    "id": 14,
+    "name": "trmnl (og)",
+    "bannerKey": "shop/14/2b9101bf-2aa2-408e-b14f-adbaec2717aa.webp"
+  },
+  {
+    "id": 6,
+    "name": "insta360 link 2",
+    "bannerKey": "shop/6/0ea14b80-3975-4b23-80d1-a1e4c442cdef.webp"
+  },
+  {
+    "id": 9,
+    "name": "bambu lab a1 mini",
+    "bannerKey": "shop/9/4719f0e4-e172-4cc9-bd9b-2444e75a6886.webp"
+  }
+]

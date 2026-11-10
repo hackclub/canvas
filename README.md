@@ -1,91 +1,15 @@
-# Nuxt Minimal Starter
+# Canvas (static)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Canvas is over, so this branch is a static site with no backend: the homepage and a page of
+every approved submission.
 
-## Setup
-
-Make sure to install dependencies:
+- `app/data/ships.json` — the approved ships, exported from the production database
+- `app/data/shop-featured.json` — the shop items on the homepage marquee
+- `public/images/` — their banner images, at the same `/images/<key>` paths as before
+- `public/img/canvas.png` — the final canvas
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+pnpm dev       # local dev server
+pnpm generate  # static site in .output/public, deployable to any static host
 ```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-
-## Docker
-
-`compose.yaml` runs Postgres and the app, and the app applies any pending migrations when it starts:
-
-```bash
-cp .env.example .env   # fill it in, including POSTGRES_PASSWORD, NUXT_SESSION_PASSWORD and TOKEN_ENCRYPTION_KEY
-docker compose up -d --build
-```
-
-The app is on `http://localhost:${APP_PORT:-3000}`. Set `SITE_URL` to the public origin when deploying.
-Run a single copy of the app, the canvas is kept in memory.
-
-Schema changes need a migration for the container: `pnpm db:generate`, and commit the result
-in `server/database/migrations`. The app applies them when it starts (in production only, see `server/plugins/migrate.ts`), and exits if one fails. (In development,
-`pnpm db:push` is still fine, but don't run the migrations against a database made with it.)

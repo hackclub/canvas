@@ -1,0 +1,192 @@
+[
+  {
+    "id": 370,
+    "name": "PetWobble",
+    "description": "A Desktop Pet, from the graveyard of my old Evolution Simulator, Wobble arises back, NOW on your PC 👻. He will have a shop, its body be generated dynamically (using points for satisfying animaitons when dragging and SMASHING INTO WALLS). And much moooreee... hehehe",
+    "bannerKey": "banners/370/510bc60f-a4d0-473c-8b81-6c4812ea6560.webp",
+    "demoUrl": "https://github.com/MrCode200/PetWobble/releases/tag/v1.0.0",
+    "repoUrl": "https://github.com/MrCode200/PetWobble",
+    "ownerName": "navidyaghmaei",
+    "ownerSlackId": "U0BMQSUV1DG"
+  },
+  {
+    "id": 530,
+    "name": "Limbus Website",
+    "description": "This is a website that acts as sort of a background information page for every Project Moon game so far. I love Project Moon a lot.",
+    "bannerKey": "banners/530/a9898e05-1e6d-4769-b310-6961ab2f653e.webp",
+    "demoUrl": "https://georgeguillermo.github.io/Limbus-Website/",
+    "repoUrl": "https://github.com/georgeguillermo/Limbus-Website",
+    "ownerName": "george.guillermo",
+    "ownerSlackId": "U0C1A7U2S9Y"
+  },
+  {
+    "id": 486,
+    "name": "pixedwall",
+    "description": "a wallpaper engine for pixel artworks written from scratch in Rust using the windows API, and a parser/renderer for an animated image format commonly used by videogames from the 1980s.\n\n(the image format is called ILBM and was used for pixel artworks that used color cycling, an old school technique for animating images)",
+    "bannerKey": "banners/486/11a2d1a9-199b-42a2-97c7-339d09342127.webp",
+    "demoUrl": "https://github.com/ingobeans/canvascycle-wallpaper/releases/tag/0.4.16",
+    "repoUrl": "https://github.com/ingobeans/canvascycle-wallpaper",
+    "ownerName": "iris",
+    "ownerSlackId": "U098P9DLUGJ"
+  },
+  {
+    "id": 519,
+    "name": "python snake",
+    "description": "I built a snake game cause it was my first python project",
+    "bannerKey": "banners/519/e4a46542-f748-4d6d-a099-d0dfe042f86a.webp",
+    "demoUrl": "https://tupirek.github.io/python_snake/",
+    "repoUrl": "https://github.com/Tupirek/python_snake",
+    "ownerName": "vojtech.uhyrek13",
+    "ownerSlackId": "U0BFB0PBQHM"
+  },
+  {
+    "id": 358,
+    "name": "Chip-8 Emulator",
+    "description": "An emulator thats purpose is to run old retro games. I intend to use this project as a way of soldifying what i've learnt about C++ thus far.",
+    "bannerKey": "banners/358/f809ac1e-87bd-472d-93c8-f2bc04cf3d77.webp",
+    "demoUrl": "https://github.com/DevDawson09/Chip-8-Emulator/releases/tag/v1.1.0",
+    "repoUrl": "https://github.com/DevDawson09/Chip-8-Emulator",
+    "ownerName": "kaicdawson",
+    "ownerSlackId": "U0C8Q6N48AW"
+  },
+  {
+    "id": 355,
+    "name": "PokéGrid",
+    "description": "PokeGrid is a Pokémon website where you can explore Pokémon, search by name and save your favorites.",
+    "bannerKey": "banners/355/bde69084-73a2-45bc-812c-40609d7cc2fe.webp",
+    "demoUrl": "https://udayprakash999.github.io/PokeGrid/",
+    "repoUrl": "https://github.com/udayprakash999/PokeGrid",
+    "ownerName": "itzurboiuday",
+    "ownerSlackId": "U082ADK3DCM"
+  },
+  {
+    "id": 491,
+    "name": "Grid draw",
+    "description": "Pixel draw website, like canvas's canvas. lmao",
+    "bannerKey": "banners/491/70b39176-22e2-48f0-a987-446ae73780ca.webp",
+    "demoUrl": "https://www.github.com/idli69/grid-draw",
+    "repoUrl": "https://grid-draw-sand.vercel.app/",
+    "ownerName": "jaykrishnatj",
+    "ownerSlackId": "U0B2X5F48A0"
+  },
+  {
+    "id": 198,
+    "name": "Quirkybit OS",
+    "description": "it's a mini smartphone like operating system UI built using HTML, CSS & JavaScript !",
+    "bannerKey": "banners/198/278bc875-f957-40f2-9651-73bd27ff8503.webp",
+    "demoUrl": "https://udayprakash999.github.io/QuirkyBit-OS/",
+    "repoUrl": "https://github.com/udayprakash999/QuirkyBit-OS",
+    "ownerName": "itzurboiuday",
+    "ownerSlackId": "U082ADK3DCM"
+  },
+  {
+    "id": 28,
+    "name": "Portfolio",
+    "description": "A portfolio to introduce myself better to other people!",
+    "bannerKey": "banners/28/d256b119-1d9f-4695-81a4-109b988e178f.webp",
+    "demoUrl": "https://vinifolio.marcinho.workers.dev/",
+    "repoUrl": "https://github.com/Developer-Vini/ViniFolio",
+    "ownerName": "Vini",
+    "ownerSlackId": "U0BVDBAKMAM"
+  },
+  {
+    "id": 432,
+    "name": "Tic-Tac-Toe",
+    "description": "A tic-tac-toe game in Svelte 5.",
+    "bannerKey": "banners/432/e54590e5-1c36-4da6-b615-cd5c4678b492.webp",
+    "demoUrl": "https://tictactoe-tan-sigma.vercel.app/",
+    "repoUrl": "https://github.com/idli69/tictactoe/",
+    "ownerName": "jaykrishnatj",
+    "ownerSlackId": "U0B2X5F48A0"
+  },
+  {
+    "id": 325,
+    "name": "Canvas Clicker",
+    "description": "Clicker Game themed around canvas :3 Click the logo to get points to spend on upgrades! You can upgrade the amount of points per click, auto-clicks, and a multiplier. You can also buy and choose from 4 themes, a canvas theme, a blahaj theme, an Emma theme, and a cat theme.",
+    "bannerKey": "banners/325/59984c94-1dc1-4c39-84b2-689194c1d498.webp",
+    "demoUrl": "https://github.com/kibbthefox/Canvas-Clicker/releases/tag/v1.0",
+    "repoUrl": "https://github.com/kibbthefox/Canvas-Clicker",
+    "ownerName": "kibbthefox",
+    "ownerSlackId": "U0BDXDSNPNZ"
+  },
+  {
+    "id": 284,
+    "name": "HAPPY HALLOWEEN",
+    "description": "A Halloween website, i created this website to bring fun it features a home, about, gallery and activities section",
+    "bannerKey": "banners/284/5577be9f-895a-49ec-9934-91b8f2b05adb.webp",
+    "demoUrl": "https://udayprakash999.github.io/Happy-Halloween/",
+    "repoUrl": "https://github.com/udayprakash999/Happy-Halloween",
+    "ownerName": "itzurboiuday",
+    "ownerSlackId": "U082ADK3DCM"
+  },
+  {
+    "id": 3,
+    "name": "tems emoji scraper :3",
+    "description": "A tool for scraping Microsoft Teams animated emojis !! Microsoft formats them as PNG spritesheets and I use a modified fork I made of the library gif.js to convert to an animated Gif instead. (The fork adds better transparency support)\nvery boring i know :pensivewobble:",
+    "bannerKey": "banners/3/db8f4150-e9af-4882-804c-cd9803754346.webp",
+    "demoUrl": "https://ingobeans.github.io/teams-emoji-scraper/",
+    "repoUrl": "https://github.com/ingobeans/teams-emoji-scraper",
+    "ownerName": "iris",
+    "ownerSlackId": "U098P9DLUGJ"
+  },
+  {
+    "id": 309,
+    "name": "snake-game",
+    "description": "My version of the Classic retro Snake game.",
+    "bannerKey": "banners/309/d10a4cd4-6633-42c8-a720-2420b8b69878.webp",
+    "demoUrl": "https://idli69.github.io/snake-game/",
+    "repoUrl": "https://github.com/idli69/snake-game/",
+    "ownerName": "jaykrishnatj",
+    "ownerSlackId": "U0B2X5F48A0"
+  },
+  {
+    "id": 299,
+    "name": "P A N D A.",
+    "description": "A panda theme responsive website where you can explore diff panda species and know more about them.",
+    "bannerKey": "banners/299/28cbc9b3-d76b-48bc-886b-cb09e5f8cc66.webp",
+    "demoUrl": "https://udayprakash999.github.io/PANDA./",
+    "repoUrl": "https://github.com/udayprakash999/PANDA.",
+    "ownerName": "itzurboiuday",
+    "ownerSlackId": "U082ADK3DCM"
+  },
+  {
+    "id": 332,
+    "name": "This Is How To Talk To Me",
+    "description": "A website that details your plan of action to talk to me, and what steps you should follow.",
+    "bannerKey": "banners/332/17771563-b787-418f-9e71-66a41234cf35.webp",
+    "demoUrl": "https://misterfedoradevs.github.io/This-Is-How-To-Talk-To-Me/",
+    "repoUrl": "https://github.com/MisterFedoraDevs/This-Is-How-To-Talk-To-Me.git",
+    "ownerName": "Darron",
+    "ownerSlackId": "U0C5HR9LP6C"
+  },
+  {
+    "id": 285,
+    "name": "chat™",
+    "description": "a chat app made in JavaScript and socket.io that used to be simple but really isn't anymore",
+    "bannerKey": "banners/285/2603e30a-83ef-431e-a66c-331e1b89b8a7.webp",
+    "demoUrl": "https://chattm.app/",
+    "repoUrl": "https://github.com/emmameowss/chattm",
+    "ownerName": "Emma",
+    "ownerSlackId": "U0A546Y17DK"
+  },
+  {
+    "id": 228,
+    "name": "My website",
+    "description": "A website about me",
+    "bannerKey": "banners/228/b034f5c8-4165-40e0-997b-c900abfa66f3.webp",
+    "demoUrl": "https://my-website-v3-1.onrender.com/",
+    "repoUrl": "https://github.com/ClarkCoates860/My-website-v3",
+    "ownerName": "clark",
+    "ownerSlackId": "U0C6LH9SGAE"
+  },
+  {
+    "id": 136,
+    "name": "ABOUT ME CARD",
+    "description": "A creative personal About me card website that works like personal portfolio card. its Responsive on all devices.",
+    "bannerKey": "banners/136/f0f308b1-9811-4cb4-8efd-db8d532516a8.webp",
+    "demoUrl": "https://udayprakash999.github.io/ABOUT-ME-CARD/",
+    "repoUrl": "https://github.com/udayprakash999/ABOUT-ME-CARD",
+    "ownerName": "itzurboiuday",
+    "ownerSlackId": "U082ADK3DCM"
+  }
+]

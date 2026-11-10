@@ -4,8 +4,8 @@
       <div class="flex justify-between items-start">
         <SvgHackOrphtop :width="150" />
         <div class="pt-4">
-          <UiButton to="/app" icon="lucide:arrow-right"
-            >Start painting</UiButton
+          <UiButton to="/submissions" icon="lucide:arrow-right"
+            >Show submissions</UiButton
           >
         </div>
       </div>
@@ -23,22 +23,9 @@
           result gets put up at hack club hq!
         </p>
 
-        <form
-          action="/auth/hackclub"
-          method="get"
-          class="mt-6 flex items-center border-black border-4 bg-black gap-1"
+        <UiButton to="/submissions" icon="lucide:arrow-right" class="mt-6"
+          >show submissions</UiButton
         >
-          <input
-            type="email"
-            name="login_hint"
-            autocomplete="email"
-            placeholder="john@example.com"
-            class="p-3 bg-white"
-          />
-          <UiButton type="submit" icon="lucide:arrow-right" inline
-            >let's paint!</UiButton
-          >
-        </form>
         <p class="opacity-50">
           October 8th - October 22nd. For anyone age 13 to 18!
         </p>
@@ -74,8 +61,8 @@
                   projects, and put your mark on the canvas! Ship your projects
                   and get the final result printed on a poster or postcard :o
                 </p>
-                <UiButtonSmall class="border-3 border-white" to="/app">
-                  get started :D
+                <UiButtonSmall class="border-3 border-white" to="/submissions">
+                  show submissions
                 </UiButtonSmall>
                 <!-- points from the text to the canvas beside it, so it only makes sense side by side -->
                 <div class="hidden md:flex justify-end mt-10">
@@ -145,7 +132,7 @@
                     </p>
                     <!-- prettier-ignore -->
                     <div class="flex flex-col gap-1">
-                      <NuxtLink to="/app">open canvas</NuxtLink>
+                      <NuxtLink to="/submissions">show submissions</NuxtLink>
                       <NuxtLink :to="`https://hackclub.enterprise.slack.com/archives/${CANVAS_CHANNEL_ID}`">#canvas</NuxtLink>
                     </div>
                   </div>
@@ -206,6 +193,7 @@ const faq = [
   },
 ];
 
-// Bound rather than written in the template, where Vite would try to import it as a file
-const snapshotUrl = "/api/canvas/snapshot.png";
+// The final canvas. Bound rather than written in the template, where Vite would try to
+// import it as a file
+const snapshotUrl = "/img/canvas.png";
 </script>

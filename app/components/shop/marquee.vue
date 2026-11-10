@@ -29,8 +29,10 @@
 </template>
 
 <script setup lang="ts">
-// The shop items admins picked for the landing page. Renders nothing if there aren't any.
-const { data: items } = await useFetch("/api/shop/featured");
+import featured from "~/data/shop-featured.json";
+
+// The shop items admins picked for the landing page, as they were when the site went static
+const items = ref(featured);
 
 // The marquee loops by repeating its contents, which only looks seamless if one copy is wider
 // than the screen. So a short list is repeated until it's at least ~2400px (cards are 272px).
